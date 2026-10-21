@@ -34,6 +34,32 @@ The default data directory is `~/Library/Application Support/LTX Reference Resto
 6. Compare original and output with synchronized playback/scrubbing, side-by-side or overlay, enlarged face regions and selected references. Inspect technical timing separately from identity, eyes, mouth, expression, gaze, motion, flicker and invented detail. Accept, Reject or mark Needs Revision and add notes.
 7. Reopen the project later. Sources, reference approvals, immutable results and review state persist in SQLite and the data directory.
 
+## Screenshots
+
+Real captures of the running app using *The Hitch-Hiker* from the [public film test kit](docs/public-film-demo.md). Film images come from the Library of Congress [YouTube edition](https://www.youtube.com/watch?v=VcKZ636kvxg); see the [source catalog](fixtures/public-films/catalog.json) for attribution and rights scope.
+
+These examples show an **FFmpeg baseline upscale** and a **reference placement preview**. LTX inference remains unverified. Reference approval and the Needs Revision label are automated fixture setup/persistence states; human identity and performance review has not been performed.
+
+**1. Inspect a source and define a shot.** Review the clip's dimensions, frame rate, supplied audio and in/out range. This public fixture contains 49 frames.
+
+![Sources and shots showing the public film preview, source metadata summary and 49-frame shot](docs/screenshots/01-sources-and-shots.jpg)
+
+**2. Organize actor references.** Keep authentic source crops with their view angle, expression, lighting and approval state.
+
+![Actor library showing the public film's original-footage reference crop and approval badge](docs/screenshots/02-actor-references.jpg)
+
+**3. Place the selected reference.** Inspect the face region in source coordinates and assign an approved reference to the shot.
+
+![Shot setup showing a face region on the public source frame and the selected actor reference](docs/screenshots/03-shot-placement.jpg)
+
+**4. Inspect the prepared guide.** The actual placement preview is displayed with the selected render settings. The baseline engine does not consume actor conditioning.
+
+![Prepared reference placement preview beside the FFmpeg baseline render settings](docs/screenshots/04-guide-preview.jpg)
+
+**5. Compare the completed version.** Use synchronized playback, frame stepping, side-by-side or overlay comparison, then record a human review.
+
+![Synchronized side-by-side comparison of the original public clip and its labeled FFmpeg baseline upscale](docs/screenshots/05-compare-baseline.jpg)
+
 ## Reproducible synthetic demo
 
 For real historical footage, see the [public film test kit](docs/public-film-demo.md) and its [executed results](docs/public-film-results.md). It downloads official Library of Congress YouTube editions, prepares three timestamp-mapped 49-frame clips and held-out actor references, and exercises the wrapper with shareable reports. Downloads are opt-in and remain outside Git.
