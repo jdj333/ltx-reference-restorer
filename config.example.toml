@@ -1,0 +1,36 @@
+# Copy to a local file outside Git and select it with RESTORER_CONFIG=/absolute/path/config.toml.
+# Paths support ~; relative paths resolve from the process working directory.
+[restorer]
+data_dir = "~/Library/Application Support/LTX Reference Restorer"
+host = "127.0.0.1"
+port = 8787
+ffmpeg = "ffmpeg"
+ffprobe = "ffprobe"
+# Imports copy originals into the data directory. Restrict this list to your media folders.
+import_roots = ["~/Movies", "/tmp"]
+max_frames = 20000
+
+# Existing, user-managed ComfyUI installation. Nothing is downloaded or installed automatically.
+comfy_url = "http://127.0.0.1:8188"
+comfy_timeout = 3600
+# API-format workflow bundle; see docs/integration-notes.md for the verified contract.
+# comfy_workflow = "/absolute/path/to/my-verified-workflow.json"
+
+# Conservative first probe: manually select a ~2-second shot, one actor, scale=2,
+# seed=42. These are job controls, not automatic assumptions about available RAM.
+
+# Optional named presets replace the defaults. They only populate real job controls;
+# loading a preset does not submit work or establish hardware support.
+[restorer.presets.baseline_2x]
+label = "Baseline · conservative 2×"
+backend = "baseline"
+scale = 2
+
+[restorer.presets.ltx_short_probe]
+label = "LTX Restore · short static probe, 1×"
+backend = "comfy_restore"
+scale = 1
+seed = 42
+steps = 8
+cfg = 1.0
+use_references = false
