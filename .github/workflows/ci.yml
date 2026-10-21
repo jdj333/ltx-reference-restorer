@@ -15,7 +15,7 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Install Python dependencies
-        run: uv sync --locked --extra dev
+        run: uv sync --locked --extra dev --extra public-demo
       - name: Run focused tests and real FFmpeg baseline
         run: uv run pytest -q
       - name: Install browser dependencies

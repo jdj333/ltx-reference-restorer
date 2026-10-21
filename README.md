@@ -36,6 +36,8 @@ The default data directory is `~/Library/Application Support/LTX Reference Resto
 
 ## Reproducible synthetic demo
 
+For real historical footage, see the [public film test kit](docs/public-film-demo.md) and its [executed results](docs/public-film-results.md). It downloads official Library of Congress YouTube editions, prepares three timestamp-mapped 49-frame clips and held-out actor references, and exercises the wrapper with shareable reports. Downloads are opt-in and remain outside Git.
+
 ```sh
 RESTORER_DATA_DIR="$PWD/.data/demo" uv run restorer demo
 RESTORER_DATA_DIR="$PWD/.data/demo" uv run restorer start

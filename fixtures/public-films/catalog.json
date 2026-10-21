@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "catalog_verified_date": "2026-10-21",
+  "description": "Public film sources for reproducible local restoration experiments. Downloaded media and generated app data are kept outside Git.",
+  "source_policy": {
+    "preferred_provider": "youtube",
+    "preferred_uploader": "Library of Congress",
+    "archive_fallback": "Use the explicitly listed Library of Congress digital viewing copy when the official YouTube upload cannot be retrieved. Record the provider actually used; never describe an archive download as a YouTube extraction.",
+    "access": "Public, unrestricted downloads only. Do not use account cookies, credentials, DRM circumvention, or anti-bot bypasses.",
+    "edition_matching": "YouTube and archive encodes may have different timing, framing, frame rates, or audio. Clip selections and references must identify and match the downloaded edition.",
+    "credit_line": "Library of Congress, Motion Picture, Broadcasting, and Recorded Sound Division."
+  },
+  "rights": {
+    "curated_source_url": "https://www.loc.gov/free-to-use/public-domain-films-from-the-national-film-registry/",
+    "scope": "United States",
+    "assessment": "The Library of Congress explicitly includes all three titles in its curated public-domain film selection. The catalog links below identify the specific Library digital viewing copies used as archive alternatives.",
+    "edition_note": "This assessment does not cover unrelated uploads, later colorizations, new music, or other added material. Use the named institutional editions and retain their audio as supplied. Users outside the United States should assess applicable local rights.",
+    "verified_date": "2026-10-21"
+  },
+  "films": [
+    {
+      "id": "st-louis-blues-1929",
+      "title": "St. Louis Blues",
+      "year": 1929,
+      "youtube": {
+        "url": "https://www.youtube.com/watch?v=hdoRQ2iqh8I",
+        "video_id": "hdoRQ2iqh8I",
+        "title": "St. Louis Blues",
+        "uploader": "Library of Congress",
+        "uploader_url": "https://www.youtube.com/@loc",
+        "metadata_verification": "YouTube public oEmbed response",
+        "metadata_verified_date": "2026-10-21"
+      },
+      "archive": {
+        "provider": "Library of Congress",
+        "item_url": "https://www.loc.gov/item/2023602002/",
+        "metadata_url": "https://www.loc.gov/item/2023602002/?fo=json",
+        "resource_url": "https://www.loc.gov/resource/ntscrm.00063365/",
+        "download_url": "https://tile.loc.gov/storage-services/service/mbrs/ntscrm/00063365/00063365.mp4",
+        "edition": "Library of Congress digital viewing copy, resource ntscrm.00063365",
+        "expected_size_bytes": 604578152,
+        "catalog_duration_seconds": 960,
+        "download_restricted": false,
+        "can_download": true,
+        "metadata_verified_date": "2026-10-21"
+      },
+      "test_use": "Singing, mouth timing, changing expression, and a public actor reference library. Shot positions are selected only after inspecting the downloaded edition."
+    },
+    {
+      "id": "the-hitch-hiker-1953",
+      "title": "The Hitch-Hiker",
+      "year": 1953,
+      "youtube": {
+        "url": "https://www.youtube.com/watch?v=VcKZ636kvxg",
+        "video_id": "VcKZ636kvxg",
+        "title": "The Hitch-Hiker",
+        "uploader": "Library of Congress",
+        "uploader_url": "https://www.youtube.com/@loc",
+        "metadata_verification": "YouTube public oEmbed response",
+        "metadata_verified_date": "2026-10-21"
+      },
+      "archive": {
+        "provider": "Library of Congress",
+        "item_url": "https://www.loc.gov/item/2023602025/",
+        "metadata_url": "https://www.loc.gov/item/2023602025/?fo=json",
+        "resource_url": "https://www.loc.gov/resource/ntscrm.00047382/",
+        "download_url": "https://tile.loc.gov/storage-services/service/mbrs/ntscrm/00047382/00047382.mp4",
+        "edition": "Library of Congress digital viewing copy, resource ntscrm.00047382",
+        "expected_size_bytes": 1129647946,
+        "catalog_duration_seconds": 4258,
+        "download_restricted": false,
+        "can_download": true,
+        "metadata_verified_date": "2026-10-21"
+      },
+      "test_use": "Dialogue, gaze, modest head movement, and source audio alignment. Shot positions are selected only after inspecting the downloaded edition."
+    },
+    {
+      "id": "the-great-train-robbery-1903",
+      "title": "The Great Train Robbery",
+      "year": 1903,
+      "youtube": {
+        "url": "https://www.youtube.com/watch?v=In3mRDX0uqk",
+        "video_id": "In3mRDX0uqk",
+        "title": "The Great Train Robbery",
+        "uploader": "Library of Congress",
+        "uploader_url": "https://www.youtube.com/@loc",
+        "metadata_verification": "YouTube public oEmbed response",
+        "metadata_verified_date": "2026-10-21"
+      },
+      "archive": {
+        "provider": "Library of Congress",
+        "item_url": "https://www.loc.gov/item/00694220/",
+        "metadata_url": "https://www.loc.gov/item/00694220/?fo=json",
+        "resource_url": "https://www.loc.gov/resource/ntscrm.00000765/",
+        "download_url": "https://tile.loc.gov/storage-services/service/mbrs/ntscrm/00000765/00000765.mp4",
+        "edition": "Library of Congress digital viewing copy, resource ntscrm.00000765",
+        "expected_size_bytes": 274118177,
+        "catalog_duration_seconds": 701,
+        "download_restricted": false,
+        "can_download": true,
+        "metadata_verified_date": "2026-10-21"
+      },
+      "test_use": "Early-film damage and the final closeup, if present in the downloaded edition. The catalog describes some collection copies as incomplete; this fixture makes no completeness claim."
+    }
+  ]
+}
