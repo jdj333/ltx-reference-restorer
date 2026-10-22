@@ -1,0 +1,159 @@
+{
+  "created_at": "2026-10-22T01:02:16.008539+00:00",
+  "check": "actual public-film exact paused comparison PNGs",
+  "human_fidelity_review": "not_performed",
+  "fixtures": [
+    {
+      "id": "st-louis-singing",
+      "job_id": "12c57013d17f406fbb89ce9fcbc81975",
+      "checks": [
+        {
+          "frame": 0,
+          "view": "source",
+          "width": 480,
+          "height": 360,
+          "png_sha256": "9ca5373e0c1b8880af49773ec77833b023892dac69f5ea137026bd66da588d15"
+        },
+        {
+          "frame": 0,
+          "view": "output",
+          "width": 960,
+          "height": 720,
+          "png_sha256": "8b835b117bfba7f80628771b0e354309872d2c3a57cafc7c0af1fc2abe2fe3e9"
+        },
+        {
+          "frame": 24,
+          "view": "source",
+          "width": 480,
+          "height": 360,
+          "png_sha256": "28918c6eb59857a2fe622bafa23bf137aa6735dbc990c897ff66beda1aaa5e74"
+        },
+        {
+          "frame": 24,
+          "view": "output",
+          "width": 960,
+          "height": 720,
+          "png_sha256": "f50864c1bf20ab00155f2585f3f40db251e923436524ef888732441293e7f8b8"
+        },
+        {
+          "frame": 48,
+          "view": "source",
+          "width": 480,
+          "height": 360,
+          "png_sha256": "0707741197121ee9b01e2825d1017e7b14113785deb529cbfc89ea4d6dd0ba7c"
+        },
+        {
+          "frame": 48,
+          "view": "output",
+          "width": 960,
+          "height": 720,
+          "png_sha256": "1cb7426e44a30080a3d838ef643071f554a284cb905a55cc508fb157aca85af9"
+        }
+      ],
+      "job_unchanged": true
+    },
+    {
+      "id": "hitch-hiker-closeup",
+      "job_id": "86818a18125745168fece4cf4790a374",
+      "checks": [
+        {
+          "frame": 0,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "dcb6003f8a34fc4bba475e9a12052be2da586879f14286ec88868439e8bdc5e1"
+        },
+        {
+          "frame": 0,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "bfe6011bb9d6453f109c9b5a6f890dd5c397bba87071f5aaa93662624233d516"
+        },
+        {
+          "frame": 24,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "290a4b19316b09f62e054ef85362ad3d650b971f8d6b5dbec40513fd2a6b57ae"
+        },
+        {
+          "frame": 24,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "f154ed240d042aedf1eb4d0f4594b3c300a94d7f02b20bbd6b927e2f00a2205b"
+        },
+        {
+          "frame": 48,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "e12422618a8d44cefe27534f590254fa22cff8f0468e94a00e6989946af34326"
+        },
+        {
+          "frame": 48,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "a3c1b9b09118c541bb7fe30a954aedadbbd3b2bf3f27577614387d5b36cdc37a"
+        }
+      ],
+      "job_unchanged": true
+    },
+    {
+      "id": "train-robbery-closeup",
+      "job_id": "a09f53b9ef20451285e2a0ddb811735c",
+      "checks": [
+        {
+          "frame": 0,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "b0888b0ab3a8f4a1c9532bc7e1d6f5cce91290d9d2a3bbe81e8e14af9d8efa47"
+        },
+        {
+          "frame": 0,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "b3065e293b565781a1400d07c000b51e40559d9312725284e7e315eff3ed5bb2"
+        },
+        {
+          "frame": 24,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "9d3b0e1d76de4dfd4fb0fd89aabb07f55244c5265af09ddfd22ab829cbec5435"
+        },
+        {
+          "frame": 24,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "2d5b5382f7f475ca3c02efeaade6d614971bde25b0e55e69fe1ef899f0ef1979"
+        },
+        {
+          "frame": 48,
+          "view": "source",
+          "width": 640,
+          "height": 360,
+          "png_sha256": "b886371e6771ca0ac875da3fee63ecc44b2de698d08953f2a92244b3c39a716e"
+        },
+        {
+          "frame": 48,
+          "view": "output",
+          "width": 1280,
+          "height": 720,
+          "png_sha256": "4fa1e069fedf2858b7782a5bb115ac839c74e80d998721ce928fe2f9490fd9bb"
+        }
+      ],
+      "job_unchanged": true
+    }
+  ],
+  "schema_version": 1,
+  "application_version": "0.1.0",
+  "verified_commit": "ce4c494ebf21d217ae0caaa69adb13b76d560ff4",
+  "status": "passed",
+  "scope": "Three public-film baseline jobs; exact source/output PNG decoding and dimensions at frames 0, 24 and 48. Endpoint hash verification succeeded; job records remained unchanged. No LTX inference or human visual approval."
+}

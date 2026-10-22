@@ -54,7 +54,7 @@ These examples show an **FFmpeg baseline upscale** and a **reference placement p
 
 ![Prepared reference placement preview beside the FFmpeg baseline render settings](docs/screenshots/04-guide-preview.jpg)
 
-**5. Compare the completed version.** Use synchronized video playback, pause or step to inspect exact decoded source/output stills, then record a human review. The capture below shows the comparison layout; paused stills use the same panels.
+**5. Compare the completed version.** Use synchronized video playback, pause or step to inspect exact decoded source/output stills, then record a human review. The capture below shows exact frame 24 from both stored files and the matching enlarged face crops.
 
 ![Synchronized side-by-side comparison of the original public clip and its labeled FFmpeg baseline upscale](docs/screenshots/05-compare-baseline.jpg)
 
@@ -107,7 +107,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-Current local validation passed **124 Python tests**, the strict TypeScript/Vite production build and **6 browser cases across Chromium and WebKit**, including actual decoded PNG frame pairs, face-crop pixels, loading/failure/retry and replay after the final frame. The [verification summary](docs/verification.md) records exact revision/platform scope, with [CI results attached to each pushed commit](https://github.com/jdj333/ltx-reference-restorer/actions). Three 49-frame public-film baselines passed again; see the [fresh safe report](fixtures/public-films/results/2026-10-21-polish.json). Browser and transport tests do not establish model inference or human identity/performance approval. The [LTX pilot procedure](docs/ltx-pilot.md) defines the remaining real B/C experiment and evidence.
+Current local validation passed **124 Python tests**, the strict TypeScript/Vite production build and **6 browser cases across Chromium and WebKit**, including decoded PNG pairs, face-crop pixels, loading/failure/retry and final-frame replay. [Ubuntu CI at `ce4c494`](https://github.com/jdj333/ltx-reference-restorer/actions/runs/39703263586) also passed Python 3.11/3.14 and all six browser cases. Three 49-frame public-film baselines passed again; see the [fresh safe report](fixtures/public-films/results/2026-10-21-polish.json) and [18 paused-preview checks](fixtures/public-films/results/2026-10-21-paused-frames.json). The [verification summary](docs/verification.md) records exact revisions and limits. Browser and transport tests do not establish model inference or human identity/performance approval. The [LTX pilot procedure](docs/ltx-pilot.md) defines the remaining real B/C experiment and evidence.
 
 - **FFmpeg missing:** install FFmpeg including ffprobe, or configure their executable paths, then rerun `restorer doctor`.
 - **Import denied:** add the resolved source directory to `import_roots` in your local config. Imports are scoped; asset URLs do not expose arbitrary filesystem paths.
