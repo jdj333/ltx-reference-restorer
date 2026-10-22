@@ -75,3 +75,32 @@ def test_hash_changes_fail_instead_of_render(settings, movie):
         assert result["output_path"] is None
     finally:
         worker.close()
+
+
+def test_placement_without_actor_saves_queues_and_assignment_can_be_cleared(settings, movie):
+    client = TestClient(create_app(settings))
+    project, _, shot = setup_shot(client, movie)
+    placement = {"frame": 0, "x": 20, "y": 10, "width": 30, "height": 40}
+    # Users may set a face region before assigning an actor or reference.
+    response = client.patch(f"/api/shots/{shot['id']}", json={"setup": {"keyframes": [placement]}})
+    assert response.status_code == 200, response.text
+    saved = response.json()["setup"]
+    assert saved["actor_id"] is None and saved["reference_ids"] == []
+    assert saved["keyframes"] == [placement]
+    first = post(client, f"/api/shots/{shot['id']}/jobs", {"backend": "baseline"})
+    assert first["provenance"]["actor"] is None
+    assert first["provenance"]["shot"]["setup"]["actor_id"] is None
+    actor = post(client, f"/api/projects/{project['id']}/actors", {"name": "Unassigned fixture actor"})
+    saved["actor_id"] = actor["id"]
+    assigned = client.patch(f"/api/shots/{shot['id']}", json={"setup": saved})
+    assert assigned.status_code == 200 and assigned.json()["setup"]["actor_id"] == actor["id"]
+    saved["actor_id"] = None
+    cleared = client.patch(f"/api/shots/{shot['id']}", json={"setup": saved, "name": None})
+    assert cleared.status_code == 200, cleared.text
+    assert cleared.json()["setup"]["actor_id"] is None
+    assert cleared.json()["name"] == shot["name"]
+    second = post(client, f"/api/shots/{shot['id']}/jobs", {"backend": "baseline"})
+    assert second["provenance"]["actor"] is None and second["version"] == 2
+    # Non-HTTP callers receive the same normalized setup contract.
+    direct = client.app.state.service.update_shot(shot["id"], {"setup": {"keyframes": [placement]}})
+    assert direct["setup"]["actor_id"] is None and direct["setup"]["view"] == "front"

@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible application problem using synthetic or public media.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This report is public. Keep private footage, faces, project names, usernames, local paths, credentials, raw doctor output, logs, databases and full provenance local. Use the synthetic demo or a catalogued public-film fixture. Summarize only the relevant error after removing personal information.
+  - type: input
+    id: revision
+    attributes:
+      label: Commit or release tag
+      placeholder: e.g. the output of git rev-parse --short HEAD
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS/version, CPU architecture, browser/version, Python and FFmpeg versions. No device serial numbers or usernames.
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Workflow involved
+      options:
+        - Organization, import, setup or comparison only
+        - FFmpeg baseline
+        - Configured ComfyUI LTX Restore
+        - Configured ComfyUI LTX Refine Details
+        - Public-film download or preparation
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Name the synthetic demo or public fixture. Give settings and actions; replace local paths with placeholders.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include a short sanitized error summary, not raw logs or doctor output. State whether a real output video was produced.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Optional public example evidence
+      description: Download safe diagnostics from Setup & status, name a public-fixture recipe/report, or add a cropped public-example screenshot. Review attachments for private information before posting.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Attachment review
+      options:
+        - label: I checked this report and its attachments for private media, paths and credentials.
+          required: true

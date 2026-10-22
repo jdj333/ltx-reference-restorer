@@ -1,0 +1,14 @@
+import { useEffect, useId, useState } from 'react';
+import { api } from './api';
+import { Modal } from './Modal';
+
+type Directory = { roots: { path: string; name: string }[]; current: string | null; parent: string | null; entries: { path: string; name: string; is_dir: boolean; size_bytes?: number }[]; truncated: boolean };
+export function LocalFilePicker({ kind, onSelect, onClose }: { kind: 'video' | 'image'; onSelect: (path: string) => void; onClose: () => void }) {
+  const title = useId();
+  const [directory, setDirectory] = useState<string>();
+  const [listing, setListing] = useState<Directory>();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { let active = true; setLoading(true); setError(''); api<Directory>(`/files?kind=${kind}${directory === undefined ? '' : `&directory=${encodeURIComponent(directory)}`}`).then(data => { if (active) setListing(data); }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [directory, kind]);
+  return <Modal titleId={title} onClose={onClose} className="file-picker"><div className="modal-head"><span className="eyebrow">LOCAL FILES</span><button type="button" className="icon-button" aria-label="Close file browser" onClick={onClose}>✕</button></div><h2 id={title}>Choose a local {kind}</h2><p>Browse configured import folders. Files stay on this computer.</p><div className="file-roots">{listing?.roots.map(root => <button type="button" className="secondary" key={root.path} onClick={() => setDirectory(root.path)}>{root.name}</button>)}</div>{listing?.current && <div className="directory-bar"><button type="button" className="secondary" disabled={!listing.parent || loading} onClick={() => { if (listing.parent) setDirectory(listing.parent); }}>Up one folder</button><span className="mono" title={listing.current}>{listing.current}</span></div>}{error && <div className="callout amber" role="alert">{error}</div>}<div className="file-entries" aria-busy={loading}>{loading ? <p role="status">Opening folder…</p> : listing?.entries.length ? listing.entries.map(entry => <button type="button" className="file-entry" key={entry.path} onClick={() => entry.is_dir ? setDirectory(entry.path) : onSelect(entry.path)}><span aria-hidden="true">{entry.is_dir ? '▸' : '▧'}</span><span>{entry.name}</span><small>{entry.is_dir ? 'Folder' : kind === 'video' ? 'Video' : 'Image'}</small></button>) : <p>{listing?.current ? `No supported ${kind} files or folders here.` : 'Choose an import folder above.'}</p>}</div>{listing?.truncated && <p className="field-hint">This folder has more entries than can be shown. Open a smaller subfolder or use the advanced path field.</p>}<p className="field-hint">To expose another folder, add it to import_roots in your local TOML configuration, set RESTORER_CONFIG to that file, and restart the application.</p></Modal>;
+}

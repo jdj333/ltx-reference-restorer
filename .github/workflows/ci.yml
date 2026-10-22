@@ -2,25 +2,57 @@ name: Checks
 on: [push, pull_request]
 
 jobs:
-  test:
+  python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install Python dependencies
+        run: uv sync --locked --extra dev --extra public-demo
+      - name: Run Python tests and real FFmpeg workflows
+        run: uv run pytest -q
+
+  browser:
+    name: Chromium and WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Install Python dependencies
-        run: uv sync --locked --extra dev --extra public-demo
-      - name: Run focused tests and real FFmpeg baseline
-        run: uv run pytest -q
-      - name: Install browser dependencies
+      - name: Install application dependencies
+        run: uv sync --locked
+      - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
       - name: Build browser interface
         working-directory: frontend
         run: npm run build
+      - name: Install test browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run real API and worker browser tests
+        working-directory: frontend
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: synthetic-browser-test-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 7

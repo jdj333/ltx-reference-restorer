@@ -81,7 +81,8 @@ class Service:
     def update_shot(self, shot_id: str, changes: dict) -> dict:
         shot = self.store.get("shot", shot_id)
         if "setup" in changes:
-            setup = changes["setup"]
+            setup = Setup.model_validate(changes["setup"]).model_dump()
+            changes = {**changes, "setup": setup}
             source = self.store.get("source", shot["source_id"])
             validate_setup(setup, source, shot)
             if setup["reference_ids"] and not setup["actor_id"]:
@@ -114,7 +115,7 @@ class Service:
             index = min(range(len(source["pts"])), key=lambda i: abs(source["pts"][i] - payload.timestamp))
             extract_frame(self.asset(source["asset_path"]), target, index, self.settings, source.get("video_stream_index", source["metadata"]["video"]["index"]))
             data.update(source_file=source["path"], source_hash=source["sha256"], timestamp=source["pts"][index], source_frame=index,
-                        provenance="generated_reconstruction" if payload.provenance == "generated_reconstruction" else "original_footage")
+                        provenance="generated_reconstruction" if source.get("synthetic") or payload.provenance == "generated_reconstruction" else "original_footage")
             original_image = target.with_name(stem + "-original.png")
             shutil.copy2(target, original_image)
             data["original_asset_path"] = self.settings.relative(original_image)

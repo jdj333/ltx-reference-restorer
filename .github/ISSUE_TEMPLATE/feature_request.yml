@@ -1,0 +1,26 @@
+name: Feature request
+description: Describe a concrete restoration or review workflow improvement.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: Keep examples public or synthetic. Do not attach private film, actor photos, raw logs, local paths or credentials.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Current workflow and problem
+      description: Describe the action you are trying to complete and where it becomes difficult.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Desired behavior
+      description: Explain the outcome, including how a reviewer could tell it works.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Public example or backend evidence
+      description: Optional public fixture, upstream documentation or verified backend capability. Distinguish proposed behavior from completed model inference.

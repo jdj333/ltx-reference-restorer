@@ -4,9 +4,10 @@ import json
 import subprocess
 import uuid
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings, load_settings
@@ -14,6 +15,7 @@ from .media import extract_frame, sha256
 from .schemas import ActorInput, GuideInput, JobInput, NoteInput, ProjectInput, ReferenceInput, ReferencePatch, ReviewInput, ShotInput, ShotPatch, SourceInput
 from .service import Service
 from .store import now
+from . import onboarding
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -64,6 +66,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def backends():
         return service.backends()
 
+    @app.get("/api/system/status")
+    def setup_status():
+        return onboarding.setup_status(service)
+
+    @app.get("/api/system/diagnostics")
+    def diagnostics():
+        return JSONResponse(onboarding.shareable_diagnostics(onboarding.setup_status(service)),
+                            headers={"Content-Disposition": 'attachment; filename="ltx-restorer-diagnostics.json"'})
+
+    @app.get("/api/files")
+    def local_files(kind: Literal["video", "image"] = "video", directory: str | None = None):
+        return onboarding.browse_files(settings, kind=kind, directory=directory)
+
+    @app.get("/api/files/image-info")
+    def image_info(path: str):
+        return onboarding.image_info(settings, path)
+
+    @app.get("/api/files/preview")
+    def image_preview(path: str):
+        content, (width, height) = onboarding.image_preview(settings, path)
+        return Response(content, media_type="image/png", headers={"X-Image-Width": str(width),
+                        "X-Image-Height": str(height), "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"})
+
+    @app.post("/api/demo")
+    def synthetic_demo():
+        try:
+            return onboarding.queue_synthetic_demo(service)
+        except onboarding.DemoBusy as exc:
+            raise HTTPException(409, str(exc)) from exc
+
     @app.get("/api/presets")
     def presets():
         return [{"id": key, "label": preset.get("label", key), "settings": JobInput(**{k: v for k, v in preset.items() if k != "label"}).model_dump()} for key, preset in settings.presets.items()]
@@ -90,7 +122,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.patch("/api/shots/{shot_id}")
     def update_shot(shot_id: str, payload: ShotPatch):
-        return service.update_shot(shot_id, payload.model_dump(exclude_none=True))
+        # Ignore absent top-level updates while preserving actor_id=None inside
+        # a complete setup: it means an intentional actor assignment clear.
+        changes = {key: value for key, value in payload.model_dump().items() if value is not None}
+        return service.update_shot(shot_id, changes)
 
     @app.post("/api/projects/{project_id}/actors", status_code=201)
     def actor(project_id: str, payload: ActorInput):

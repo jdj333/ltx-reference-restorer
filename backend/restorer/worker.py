@@ -5,7 +5,9 @@ import json
 import math
 import os
 import subprocess
+import threading
 import time
+import uuid
 from pathlib import Path
 
 import psutil
@@ -23,6 +25,36 @@ class Worker:
         self.service = Service(settings)
         self.store = self.service.store
         self.lock = None
+        self._heartbeat_stop = threading.Event()
+        self._heartbeat_thread = None
+        self._active_job_id = None
+        self._owner = uuid.uuid4().hex
+
+    def _heartbeat(self, *, stopped=False):
+        """A small atomic status file, including during blocking model/FFmpeg work.
+
+        The flock remains the authority for ownership. A fresh heartbeat alone
+        never establishes a live worker after a crash or PID reuse.
+        """
+        target = self.settings.data_dir / "worker-status.json"
+        temporary = target.with_name(f".worker-status-{self._owner}-{uuid.uuid4().hex}.tmp")
+        active_job_id = self._active_job_id
+        try:
+            temporary.write_text(json.dumps({"owner": self._owner, "pid": os.getpid(),
+                "heartbeat": time.time(), "active_job_id": active_job_id,
+                "state": "stopped" if stopped else "running" if active_job_id else "idle"}))
+            temporary.replace(target)
+        except OSError:
+            # Monitoring must not interrupt a render. The UI then reports stale
+            # telemetry rather than falsely promising that a worker is healthy.
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    def _heartbeat_loop(self):
+        while not self._heartbeat_stop.wait(2):
+            self._heartbeat()
 
     def acquire(self):
         self.lock = (self.settings.data_dir / "worker.lock").open("a+")
@@ -40,9 +72,18 @@ class Worker:
         for job in self.store.list("job"):
             if job["state"] == "running":
                 self.store.update("job", job["id"], {"state": "interrupted", "finished_at": now(), "error": "Worker stopped before completion. Retry creates a new version; no mid-render resume is claimed."})
+        self._heartbeat_stop.clear()
+        self._heartbeat()
+        self._heartbeat_thread = threading.Thread(target=self._heartbeat_loop, name="restorer-worker-heartbeat", daemon=True)
+        self._heartbeat_thread.start()
 
     def close(self):
         if self.lock:
+            self._heartbeat_stop.set()
+            if self._heartbeat_thread:
+                self._heartbeat_thread.join(timeout=3)
+            self._active_job_id = None
+            self._heartbeat(stopped=True)
             fcntl.flock(self.lock, fcntl.LOCK_UN)
             self.lock.close()
             self.lock = None
@@ -52,7 +93,13 @@ class Worker:
             raise RuntimeError("Worker lock must be acquired before processing")
         job = self.store.claim_job()
         if job:
-            self.process(job)
+            self._active_job_id = job["id"]
+            self._heartbeat()
+            try:
+                self.process(job)
+            finally:
+                self._active_job_id = None
+                self._heartbeat()
             return self.store.get("job", job["id"])
         return None
 

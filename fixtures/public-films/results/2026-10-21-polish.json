@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "application_version": "0.1.0",
+  "created_at": "2026-10-22T00:27:09.320476+00:00",
+  "status": "passed",
+  "requested_backend": "baseline",
+  "scale": 2,
+  "human_fidelity_review": "not_performed",
+  "automated_reference_approval": "fixture_setup_only",
+  "review_policy": "AUTOMATED FIXTURE PERSISTENCE TEST ONLY. This record tests durable review storage; no human identity, expression, performance or historical-fidelity approval has been performed. Human comparison remains required.",
+  "ltx_inference": "not_requested",
+  "fixtures": [
+    {
+      "id": "st-louis-singing",
+      "title": "St. Louis Blues \u2014 singing and expression",
+      "source_url": "https://www.youtube.com/watch?v=hdoRQ2iqh8I",
+      "rights_url": "https://www.loc.gov/free-to-use/public-domain-films-from-the-national-film-registry/",
+      "source_sha256": "5ea2d5ca16aa8e209a2f61f886e9c11bf5174879dc73506bddf4bfc386cd1e34",
+      "clip_sha256": "40cc32fa5f5709432a57f5b0d975b48c29172fdb0c4a65cfacdc8c0c2820cb2d",
+      "reference_sha256": "97e1c55c3fec1e7565a09e725eb345719d9d05f2b8d7e0296e99e6b37ac0baa6",
+      "renders": [
+        {
+          "variant": "A",
+          "job_id": "e7050e9affa64070ba3a5a5a232792f4",
+          "version": 1,
+          "backend": "baseline",
+          "state": "succeeded",
+          "settings": {
+            "backend": "baseline",
+            "scale": 2,
+            "seed": 42,
+            "steps": 8,
+            "cfg": 1.0,
+            "use_references": false,
+            "prompt": "Preserve the source performance, expression, gaze and motion. Restore natural detail."
+          },
+          "output_url": "/api/assets/jobs/e7050e9affa64070ba3a5a5a232792f4/output.mp4",
+          "source_preview_url": "/api/assets/jobs/e7050e9affa64070ba3a5a5a232792f4/source-shot.mp4",
+          "output_sha256": "f12429072179445351181f4a8443073b630b7c96c789851c447d637761ae457b",
+          "conditioning_consumed": false,
+          "technical_checks": {
+            "expected_frames": 49,
+            "actual_frames": 49,
+            "max_timestamp_delta": 0.0,
+            "duration_delta": 0.0,
+            "audio_expected": true,
+            "audio_present": true,
+            "timing_passed": true,
+            "aspect_ratio_delta": 0.0,
+            "aspect_passed": true
+          },
+          "output_metadata": {
+            "width": 960,
+            "height": 720,
+            "sar": 1.0,
+            "duration": 2.041667,
+            "fps": 24.0,
+            "frame_count": 49,
+            "has_audio": true
+          },
+          "runtime_seconds": 0.9619306660024449,
+          "workflow_sha256": null,
+          "review_state": "needs_revision",
+          "human_fidelity_review": "not_performed"
+        }
+      ],
+      "checks": {
+        "source_import_hash_matches": true,
+        "pending_reference_rejected": true,
+        "guide_is_review_aid_for_baseline": true,
+        "reference_approval_persisted": true,
+        "review_persisted": true,
+        "note_persisted": true,
+        "frozen_reference_snapshot_preserved": true,
+        "new_version_canceled": true,
+        "retry_is_distinct_canceled_version": true,
+        "completed_output_unchanged": true,
+        "fixture_bytes_unchanged": true
+      },
+      "status": "passed",
+      "human_fidelity_review": "not_performed",
+      "project_id": "c3bc374e74314d6cb2c128591d3ef125",
+      "source_url_local": "/api/assets/sources/7ad006f4c1d8458283be97d8aec581a5.mp4",
+      "shot_id": "a82c4b00b56348d5b27f03cbd35dd610",
+      "source_frame_count": 49,
+      "reference_metadata": {
+        "view": "three_quarter",
+        "source_timestamp": 934.0,
+        "source_frame": 22416,
+        "crop": [
+          365,
+          65,
+          235,
+          270
+        ],
+        "source_hash": "5ea2d5ca16aa8e209a2f61f886e9c11bf5174879dc73506bddf4bfc386cd1e34"
+      },
+      "guide_url": "/api/assets/guides/1c52daec4fef4b29bdf1d9dad340d1d5.png",
+      "guide_sha256": "76ff0a3668e8524b63613aaafb7912eeaf2c1d5bdbcd8ba013138c91879285b1",
+      "reference_approval": "automated_fixture_setup_only",
+      "canceled_version_ids": [
+        "9667c5f4a15e4be18e85b9ddc6e7d905",
+        "d920457f585b41a5870375b42bf6c669"
+      ]
+    },
+    {
+      "id": "hitch-hiker-closeup",
+      "title": "The Hitch-Hiker \u2014 single-face closeup",
+      "source_url": "https://www.youtube.com/watch?v=VcKZ636kvxg",
+      "rights_url": "https://www.loc.gov/free-to-use/public-domain-films-from-the-national-film-registry/",
+      "source_sha256": "62e07debc71326d28308779c73cade4d5da247fd7c29f16c6bb2f4a52a3a9025",
+      "clip_sha256": "9ca14c84b3d9a1d38f4def25a8c4cb5b278ef4dceefc84d0c210596df0e4f82f",
+      "reference_sha256": "dcfd2514f9505c641c9718cdfb4fd309a1805731fd717bf835be1b15736d16ca",
+      "renders": [
+        {
+          "variant": "A",
+          "job_id": "2f2e36ea6d3a429c9eb40c132e84eafe",
+          "version": 1,
+          "backend": "baseline",
+          "state": "succeeded",
+          "settings": {
+            "backend": "baseline",
+            "scale": 2,
+            "seed": 42,
+            "steps": 8,
+            "cfg": 1.0,
+            "use_references": false,
+            "prompt": "Preserve the source performance, expression, gaze and motion. Restore natural detail."
+          },
+          "output_url": "/api/assets/jobs/2f2e36ea6d3a429c9eb40c132e84eafe/output.mp4",
+          "source_preview_url": "/api/assets/jobs/2f2e36ea6d3a429c9eb40c132e84eafe/source-shot.mp4",
+          "output_sha256": "adbaa347531328b4073872709a843f9f8f55d29fda184d5c7bddf323deeb7cdb",
+          "conditioning_consumed": false,
+          "technical_checks": {
+            "expected_frames": 49,
+            "actual_frames": 49,
+            "max_timestamp_delta": 0.0,
+            "duration_delta": 0.0,
+            "audio_expected": true,
+            "audio_present": true,
+            "timing_passed": true,
+            "aspect_ratio_delta": 0.0,
+            "aspect_passed": true
+          },
+          "output_metadata": {
+            "width": 1280,
+            "height": 720,
+            "sar": 1.0,
+            "duration": 2.041667,
+            "fps": 24.0,
+            "frame_count": 49,
+            "has_audio": true
+          },
+          "runtime_seconds": 0.9390451660146937,
+          "workflow_sha256": null,
+          "review_state": "needs_revision",
+          "human_fidelity_review": "not_performed"
+        }
+      ],
+      "checks": {
+        "source_import_hash_matches": true,
+        "pending_reference_rejected": true,
+        "guide_is_review_aid_for_baseline": true,
+        "reference_approval_persisted": true,
+        "review_persisted": true,
+        "note_persisted": true,
+        "frozen_reference_snapshot_preserved": true,
+        "new_version_canceled": true,
+        "retry_is_distinct_canceled_version": true,
+        "completed_output_unchanged": true,
+        "fixture_bytes_unchanged": true
+      },
+      "status": "passed",
+      "human_fidelity_review": "not_performed",
+      "project_id": "ad46c04a0eae445a9b8a8517d57d8ff2",
+      "source_url_local": "/api/assets/sources/dcbc3df313af43b98bd18c2cc0f7dd40.mp4",
+      "shot_id": "2dd53cbf7d3d42dd9fd6245c2c16b3d9",
+      "source_frame_count": 49,
+      "reference_metadata": {
+        "view": "three_quarter",
+        "source_timestamp": 1202.0,
+        "source_frame": 28848,
+        "crop": [
+          490,
+          40,
+          410,
+          490
+        ],
+        "source_hash": "62e07debc71326d28308779c73cade4d5da247fd7c29f16c6bb2f4a52a3a9025"
+      },
+      "guide_url": "/api/assets/guides/51d6eed821914bcb90e8281ff88cc8f7.png",
+      "guide_sha256": "69a1718de29519cffa0dd20e915edd0c285c17ca72c176a6bd53efb3aed68c67",
+      "reference_approval": "automated_fixture_setup_only",
+      "canceled_version_ids": [
+        "8401695b0a5b4d5489d8862cf9c5a10c",
+        "7022b97ae4cf4c0cbefb1d076c308618"
+      ]
+    },
+    {
+      "id": "train-robbery-closeup",
+      "title": "The Great Train Robbery \u2014 final closeup",
+      "source_url": "https://www.youtube.com/watch?v=In3mRDX0uqk",
+      "rights_url": "https://www.loc.gov/free-to-use/public-domain-films-from-the-national-film-registry/",
+      "source_sha256": "04d78dbafd7d2f9efdd0c792f22970af95365336e929439ef1f5aa2317ff1568",
+      "clip_sha256": "976cdd0941d7373507646459df610251fd7cf77a2d1d7adb3176f5c858bd95f7",
+      "reference_sha256": "58ae2bfeb08a4236a9b0b22fdc90849637665f50a8570ebd75575e21a6c4e564",
+      "renders": [
+        {
+          "variant": "A",
+          "job_id": "592a06b1f510457eb6ca6b41c137ca9f",
+          "version": 1,
+          "backend": "baseline",
+          "state": "succeeded",
+          "settings": {
+            "backend": "baseline",
+            "scale": 2,
+            "seed": 42,
+            "steps": 8,
+            "cfg": 1.0,
+            "use_references": false,
+            "prompt": "Preserve the source performance, expression, gaze and motion. Restore natural detail."
+          },
+          "output_url": "/api/assets/jobs/592a06b1f510457eb6ca6b41c137ca9f/output.mp4",
+          "source_preview_url": "/api/assets/jobs/592a06b1f510457eb6ca6b41c137ca9f/source-shot.mp4",
+          "output_sha256": "aa9519e92208a297fd04f606774af19ff26584d93596d2f5faf7247efea78372",
+          "conditioning_consumed": false,
+          "technical_checks": {
+            "expected_frames": 49,
+            "actual_frames": 49,
+            "max_timestamp_delta": 0.0,
+            "duration_delta": 0.0,
+            "audio_expected": true,
+            "audio_present": true,
+            "timing_passed": true,
+            "aspect_ratio_delta": 0.0,
+            "aspect_passed": true
+          },
+          "output_metadata": {
+            "width": 1280,
+            "height": 720,
+            "sar": 1.0,
+            "duration": 2.041667,
+            "fps": 24.0,
+            "frame_count": 49,
+            "has_audio": true
+          },
+          "runtime_seconds": 0.7950972919934429,
+          "workflow_sha256": null,
+          "review_state": "needs_revision",
+          "human_fidelity_review": "not_performed"
+        }
+      ],
+      "checks": {
+        "source_import_hash_matches": true,
+        "pending_reference_rejected": true,
+        "guide_is_review_aid_for_baseline": true,
+        "reference_approval_persisted": true,
+        "review_persisted": true,
+        "note_persisted": true,
+        "frozen_reference_snapshot_preserved": true,
+        "new_version_canceled": true,
+        "retry_is_distinct_canceled_version": true,
+        "completed_output_unchanged": true,
+        "fixture_bytes_unchanged": true
+      },
+      "status": "passed",
+      "human_fidelity_review": "not_performed",
+      "project_id": "dede22526e024846967dd673ec951c47",
+      "source_url_local": "/api/assets/sources/ad9e9af57028418883e6f82a744b2cc1.mp4",
+      "shot_id": "528d53eddf01414692a08946110d2b8a",
+      "source_frame_count": 49,
+      "reference_metadata": {
+        "view": "front",
+        "source_timestamp": 812.0,
+        "source_frame": 19488,
+        "crop": [
+          490,
+          100,
+          300,
+          370
+        ],
+        "source_hash": "04d78dbafd7d2f9efdd0c792f22970af95365336e929439ef1f5aa2317ff1568"
+      },
+      "guide_url": "/api/assets/guides/4467975998d74314aab2b194c6e31e77.png",
+      "guide_sha256": "438d1c7d9459231de23bdeaa2d1b70a6d6f9a8bdd5298a1f275a79fe4dcc3957",
+      "reference_approval": "automated_fixture_setup_only",
+      "canceled_version_ids": [
+        "5021c8b3c6824b339eafa790ae3bbd12",
+        "9f8a33f78b824cd0b385a2640310451c"
+      ]
+    }
+  ]
+}

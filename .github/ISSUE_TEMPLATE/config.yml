@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup and troubleshooting
+    url: https://github.com/jdj333/ltx-reference-restorer/blob/main/docs/setup.md
+    about: Start here for prerequisites, local data, worker ownership and supported platforms.
+  - name: Verification and known limits
+    url: https://github.com/jdj333/ltx-reference-restorer/blob/main/docs/verification.md
+    about: Check executed evidence and LTX inference limitations before reporting a missing capability.
