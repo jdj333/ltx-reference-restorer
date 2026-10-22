@@ -10,8 +10,10 @@ Changes are recorded by release. This application is a preview; successful conve
 - Reconcile dated verification evidence, public-film measurements, CI runs and platform limits.
 - Add a first-use setup guide, contribution instructions, safe bug-report forms and a review checklist.
 - Document the prerequisites and evidence required for a real controlled LTX pilot.
-- Pass 120 local Python tests, the strict frontend build and six real Chromium/WebKit browser cases; rerun all three public-film baselines successfully. Expanded CI covers Python 3.11/3.14 and real Chromium/WebKit workflows; see [Actions](https://github.com/jdj333/ltx-reference-restorer/actions) for the matching commit's result.
-- Prepare draft `v0.1.0-preview.1` notes; publication and code-license choice remain pending.
+- Add exact source/output PNG stills for paused comparison after Linux WebKit CI exposed a browser-painted-frame discrepancy. Frozen hashes/frame mappings are checked; loading and failure remain explicit, while playing uses browser video.
+- Pass 124 local Python tests, the strict frontend build and six real Chromium/WebKit cases, including decoded frame/crop pixels, loading/failure/retry, anamorphic pause/play and final-frame replay. Retain the successful three-public-film baseline rerun; exact-revision validation is recorded in [verification](docs/verification.md). Expanded CI covers Python 3.11/3.14 and real Chromium/WebKit workflows; see [Actions](https://github.com/jdj333/ltx-reference-restorer/actions) for the matching commit's result.
+- Adopt the MIT License for application code and original documentation, with third-party media/model terms kept separate.
+- Prepare `v0.1.0-preview.1` notes; see [Releases](https://github.com/jdj333/ltx-reference-restorer/releases) for published versions.
 
 ## Initial preview foundation — 2026-10-21
 

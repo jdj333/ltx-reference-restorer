@@ -16,6 +16,25 @@ async function browse(page: Page, kind: 'video' | 'image', filename: string) {
   await expect(dialog).toBeHidden();
 }
 
+async function expectPausedFrame(page: Page, jobId: string, frame?: number) {
+  const stage = page.getByRole('group', { name: /^Synchronized comparison\./ });
+  const stills = stage.locator('.compare-video img');
+  await expect(page.getByLabel('Render version to compare')).toHaveValue(jobId);
+  await expect(stage).toHaveAttribute('data-frame-ready', 'true');
+  await expect(stills).toHaveCount(2);
+  for (const index of [0, 1]) {
+    const still = stills.nth(index);
+    await expect(still).toBeVisible();
+    await expect.poll(async () => still.evaluate(image => {
+      const element = image as HTMLImageElement;
+      return element.complete && element.naturalWidth > 0;
+    })).toBe(true);
+    if (frame !== undefined) await expect(still).toHaveAttribute('data-frame', String(frame));
+  }
+  const frames = await stills.evaluateAll(images => images.map(image => image.getAttribute('data-frame')));
+  expect(frames[0]).toBe(frames[1]);
+}
+
 test('readiness, idempotent synthetic demo, synchronized comparison and durable review', async ({ page, request }, info) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -50,19 +69,81 @@ test('readiness, idempotent synthetic demo, synchronized comparison and durable 
   await expect(page.getByText(/Baseline upscale · no actor reference conditioning/)).toBeVisible();
   const comparison = page.getByRole('group', { name: /^Synchronized comparison\./ });
   await expect.poll(async () => comparison.locator('video').evaluateAll(videos => videos.every(video => (video as HTMLVideoElement).readyState >= 2))).toBe(true);
+  await expectPausedFrame(page, demo.job_id, 0);
+  // Hold one real PNG response: a new frame must not show the previous source
+  // or a newly loaded output while its matching source is still unavailable.
+  let releaseFrame!: () => void;
+  let notifyFrame!: () => void;
+  const frameGate = new Promise<void>(resolve => { releaseFrame = resolve; });
+  const frameHeld = new Promise<void>(resolve => { notifyFrame = resolve; });
+  const framePattern = `**/api/jobs/${demo.job_id}/frame?*`;
+  await page.route(framePattern, async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get('frame') === '1' && url.searchParams.get('view') === 'source') {
+      notifyFrame(); await frameGate;
+    }
+    await route.continue();
+  });
   await page.getByRole('button', { name: 'Next comparison frame', exact: true }).click();
+  await frameHeld;
+  try {
+    await expect(comparison).toHaveAttribute('data-frame-ready', 'false');
+    await expect(page.getByRole('status').filter({ hasText: 'Loading exact comparison frame 1' })).toBeVisible();
+    for (const still of await comparison.locator('.compare-video img').all()) await expect(still).toBeHidden();
+    await expect.poll(async () => Number(await page.getByLabel('Synchronized comparison playhead').inputValue())).toBeCloseTo(1 / 12, 3);
+  } finally { releaseFrame(); }
+  await expectPausedFrame(page, demo.job_id, 1);
+  await page.unroute(framePattern);
   await expect.poll(async () => Number(await page.getByLabel('Synchronized comparison playhead').inputValue())).toBeCloseTo(1 / 12, 3);
   await comparison.focus();
   await comparison.press('ArrowRight');
+  await expectPausedFrame(page, demo.job_id, 2);
   await expect.poll(async () => Number(await page.getByLabel('Synchronized comparison playhead').inputValue())).toBeCloseTo(2 / 12, 3);
+  // A paused face inspection must crop the exact source PNG, rather than a
+  // browser video element that may have sought to another decoded frame.
+  await expect.poll(async () => page.getByLabel('Original face enlarged face region').evaluate(canvas => {
+    const actual = canvas as HTMLCanvasElement;
+    const image = document.querySelector('img[alt="Original source paused frame"]') as HTMLImageElement;
+    const expected = document.createElement('canvas'); expected.width = 72; expected.height = 92;
+    expected.getContext('2d')!.drawImage(image, 125, 20, 72, 92, 0, 0, 72, 92);
+    return actual.toDataURL() === expected.toDataURL();
+  })).toBe(true);
+  // A refused frame is an explicit unavailable state, with no stale pair or
+  // face crop. Retrying then obtains actual verified frames from the API.
+  let refused = false;
+  await page.route(framePattern, async route => {
+    const url = new URL(route.request().url());
+    if (!refused && url.searchParams.get('frame') === '3' && url.searchParams.get('view') === 'output') {
+      refused = true;
+      await route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ detail: 'Synthetic transport failure test' }) });
+    } else await route.continue();
+  });
+  await comparison.press('ArrowRight');
+  await expect(page.getByRole('alert')).toContainText('Exact paused frames could not be loaded');
+  await expect(comparison).toHaveAttribute('data-frame-ready', 'false');
+  await expect(comparison.locator('.compare-video img')).toHaveCount(0);
+  await expect(page.getByLabel('Original face enlarged face region')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry exact frames', exact: true }).click();
+  await expectPausedFrame(page, demo.job_id, 3);
+  await page.unroute(framePattern);
   await expect.poll(async () => comparison.locator('video').evaluateAll(videos => {
     const [a, b] = videos as HTMLVideoElement[];
     return Math.abs(a.currentTime - b.currentTime);
   })).toBeLessThan(1 / 12);
   await comparison.press('Space');
   await expect(page.getByRole('button', { name: 'Pause synchronized playback' })).toBeVisible();
+  for (const still of await comparison.locator('.compare-video img').all()) await expect(still).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Play synchronized comparison' })).toBeVisible();
+  await expectPausedFrame(page, demo.job_id, 23);
+  // Natural completion snaps to the last exact frame. Play must still restart
+  // at the beginning, rather than replaying only that final frame forever.
+  await comparison.press('Space');
+  await expect(page.getByRole('button', { name: 'Pause synchronized playback' })).toBeVisible();
+  await expect.poll(async () => Number(await page.getByLabel('Synchronized comparison playhead').inputValue())).toBeLessThan(0.8);
+  await expect.poll(async () => comparison.locator('video').last().evaluate(video => (video as HTMLVideoElement).currentTime)).toBeGreaterThan(0);
   await comparison.press('Space');
   await expect(page.getByRole('button', { name: 'Play synchronized comparison' })).toBeVisible();
+  await expectPausedFrame(page, demo.job_id);
   await page.getByRole('button', { name: 'Overlay', exact: true }).click();
   await expect(page.getByLabel('Output overlay opacity')).toBeVisible();
   await page.getByLabel('Output overlay opacity').fill('0.25');
@@ -180,6 +261,19 @@ test('keyboard dialogs, scoped file selection, visual reference crop and unsaved
   expect(rendered.provenance.conditioning_consumed).toBe(false);
   const detail = await (await request.get(`/api/projects/${project.id}`)).json();
   expect(detail.shots[0].setup.keyframes[0]).toEqual({ frame: 0, x: 120, y: 20, width: 80, height: 110 });
+  expect(detail.sources[0].sar).toBeCloseTo(4 / 3);
+  await page.getByRole('button', { name: 'Compare & review 05' }).click();
+  await expectPausedFrame(page, job.id, 0);
+  const face = page.getByLabel('Original face enlarged face region');
+  const cropAspect = () => face.evaluate(canvas => (canvas as HTMLCanvasElement).width / (canvas as HTMLCanvasElement).height);
+  const expectedAspect = 80 / 110 * 4 / 3;
+  await expect.poll(cropAspect).toBeCloseTo(expectedAspect, 1);
+  await page.getByRole('button', { name: 'Play synchronized comparison' }).click();
+  await expect(page.getByRole('button', { name: 'Pause synchronized playback' })).toBeVisible();
+  await expect.poll(cropAspect).toBeCloseTo(expectedAspect, 1);
+  await page.getByRole('button', { name: 'Pause synchronized playback' }).click();
+  await expectPausedFrame(page, job.id);
+  await expect.poll(cropAspect).toBeCloseTo(expectedAspect, 1);
 });
 
 test('switching projects clears media drafts and hides old data while the next workspace loads', async ({ page, request }, info) => {

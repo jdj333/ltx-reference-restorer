@@ -29,7 +29,7 @@ The current default data directory is `~/Library/Application Support/LTX Referen
 3. Add an actor. Use **Browse local images** to choose a reference, or select a source frame. Draw the crop visually or enter its native pixel coordinates. Record view, quality, approval, expression, lighting and provenance. Approve references deliberately; generated reconstructions remain labeled generated.
 4. Assign one actor and an approved reference to the shot. Draw a face region on the preview, add placement keyframes if needed and inspect the actual guide artifact. The native-resolution reference crop is centered on that region in a gray working canvas; it is not resized or warped to fill the box. An oversized crop is rejected. Model conditioning initially requires a fixed region; unsupported movement is rejected with an explanation. Unsaved actor/reference/placement changes are marked and guarded before leaving the setup.
 5. Queue a baseline upscale, or a preflight-approved LTX Restore/Refine job. Each job snapshots inputs and settings, uses its own output directory and shows errors and logs. Retry creates a new version.
-6. Compare original and output with synchronized playback/scrubbing, side-by-side or overlay, enlarged face regions and selected references. Inspect technical timing separately from identity, eyes, mouth, expression, gaze, motion, flicker and invented detail. Accept, Reject or mark Needs Revision and add notes.
+6. Compare original and output side by side or in overlay, with enlarged face regions and selected references. While paused, the app displays exact server-decoded source/output PNG frames from the completed job's frozen frame mapping; stepping changes that frame pair. Loading or decoding/verification failure is shown explicitly. Play uses synchronized browser video playback; pause returns to the decoded stills. Inspect technical timing separately from identity, eyes, mouth, expression, gaze, motion, flicker and invented detail. Accept, Reject or mark Needs Revision and add notes.
 7. Reopen the project later. Sources, reference approvals, immutable results and review state persist in SQLite and the data directory.
 
 ## Screenshots
@@ -54,7 +54,7 @@ These examples show an **FFmpeg baseline upscale** and a **reference placement p
 
 ![Prepared reference placement preview beside the FFmpeg baseline render settings](docs/screenshots/04-guide-preview.jpg)
 
-**5. Compare the completed version.** Use synchronized playback, frame stepping, side-by-side or overlay comparison, then record a human review.
+**5. Compare the completed version.** Use synchronized video playback, pause or step to inspect exact decoded source/output stills, then record a human review. The capture below shows the comparison layout; paused stills use the same panels.
 
 ![Synchronized side-by-side comparison of the original public clip and its labeled FFmpeg baseline upscale](docs/screenshots/05-compare-baseline.jpg)
 
@@ -107,7 +107,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-Current local polish validation passed **120 Python tests**, the strict TypeScript/Vite build and **6 browser cases across Chromium and WebKit** using the real isolated API, worker and FFmpeg. The three 49-frame public-film baselines also passed again; see the [fresh safe report](fixtures/public-films/results/2026-10-21-polish.json). The [verification summary](docs/verification.md) retains exact historical evidence and CI links; the expanded CI matrix has [results for each pushed commit](https://github.com/jdj333/ltx-reference-restorer/actions). Browser/contract tests do not establish model inference or human identity/performance approval. The [LTX pilot procedure](docs/ltx-pilot.md) defines the remaining real B/C experiment and evidence.
+Current local validation passed **124 Python tests**, the strict TypeScript/Vite production build and **6 browser cases across Chromium and WebKit**, including actual decoded PNG frame pairs, face-crop pixels, loading/failure/retry and replay after the final frame. The [verification summary](docs/verification.md) records exact revision/platform scope, with [CI results attached to each pushed commit](https://github.com/jdj333/ltx-reference-restorer/actions). Three 49-frame public-film baselines passed again; see the [fresh safe report](fixtures/public-films/results/2026-10-21-polish.json). Browser and transport tests do not establish model inference or human identity/performance approval. The [LTX pilot procedure](docs/ltx-pilot.md) defines the remaining real B/C experiment and evidence.
 
 - **FFmpeg missing:** install FFmpeg including ffprobe, or configure their executable paths, then rerun `restorer doctor`.
 - **Import denied:** add the resolved source directory to `import_roots` in your local config. Imports are scoped; asset URLs do not expose arbitrary filesystem paths.
@@ -121,4 +121,8 @@ Current local polish validation passed **120 Python tests**, the strict TypeScri
 
 Keep the server on localhost. It is a trusted-user local application without network-service authentication. Back up the entire data directory, including SQLite and media, while processes are stopped. Source media, generated outputs, local databases, caches, models and secrets stay outside Git. See [architecture](docs/architecture.md) and [roadmap](docs/roadmap.md).
 
-For development and safe public bug reports, see [CONTRIBUTING.md](CONTRIBUTING.md). [CHANGELOG.md](CHANGELOG.md) and the [preview notes](docs/releases/0.1.0-preview.md) summarize the release scope; [verification](docs/verification.md) records executed evidence and remaining inference limits.
+For development and safe public bug reports, see [CONTRIBUTING.md](CONTRIBUTING.md). [CHANGELOG.md](CHANGELOG.md) and the [preview notes](docs/releases/0.1.0-preview.md) describe the preview scope; [verification](docs/verification.md) records executed evidence and remaining inference limits.
+
+## License
+
+The application code and original documentation use the [MIT License](LICENSE), copyright © 2026 jdj333. Model weights, upstream software, films and other third-party assets retain their own terms; the MIT code license does not grant model access or additional media rights. See the [public-film source catalog](fixtures/public-films/catalog.json) and [model integration notes](docs/integration-notes.md).

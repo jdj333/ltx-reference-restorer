@@ -18,7 +18,7 @@ npm run test:e2e
 
 The optional downloader is installed for an offline formatter regression test. The Python suite generates small local media and mocks network transport; it does not download films or weights. The browser suite starts an isolated temporary application/worker and uses generated test media. It does not reuse a server or normal project directory. Browser installation downloads test browser binaries; on a minimal Linux machine, Playwright may require its documented system dependencies. No films or model weights are downloaded by these tests. Results and screenshots are local ignored artifacts; CI retains synthetic browser failure artifacts for seven days. Use the committed lockfiles and include required lockfile changes with dependency updates.
 
-The current local polish run passed 120 Python tests, the production build and six browser cases (three scenarios in both Chromium and WebKit). These are dated evidence, not a replacement for rerunning checks after a change. See [verification](docs/verification.md) for platform and CI scope.
+The [verification summary](docs/verification.md) records dated results and exact revision/platform scope. A backend pass does not establish a browser pass; check the changed paused-frame path in both browser engines as well as its source/output hash and frame-mapping regressions.
 
 For a manual workflow, return to the repository root and use a fresh ignored directory:
 
@@ -44,3 +44,7 @@ Reports are public. Keep private footage, faces, project names, local usernames/
 ## Pull requests
 
 Explain the concrete trigger and resulting behavior, list executed checks and material limits, and update user documentation when behavior changes. Include source attribution for new public fixtures and document any preparation recipe. Never commit downloaded films, generated videos, app data, credentials or model weights. Preserve independent model/media license terms; a code change does not grant rights to those assets.
+
+## License and attribution
+
+The application code and original documentation are [MIT licensed](LICENSE), copyright © 2026 jdj333. Retain required notices and attribution for contributed third-party components. Film fixtures, model weights and other third-party assets keep their own rights/access terms; the code license does not replace them.

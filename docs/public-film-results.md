@@ -2,7 +2,7 @@
 
 **Three real public-film baseline workflows passed. No LTX inference was run.** The configured LTX comparison was attempted at preflight and blocked because the ComfyUI endpoint, nodes and model files were unavailable.
 
-The initial kit evidence below belongs to `ed1fa38`. During preview polish, the suite grew to **120 Python tests** with **6 passing Chromium/WebKit browser cases**, and all three public-film baselines passed again. The [fresh polish report](../fixtures/public-films/results/2026-10-21-polish.json) retains that rerun; see [verification](verification.md) for current checks and CI scope.
+The initial kit evidence below belongs to `ed1fa38`. During local preview polish at `d547818`, before the later decoded-still comparison fix, the suite grew to **120 Python tests** with **6 passing Chromium/WebKit browser cases**, and all three public-film baselines passed again. The [fresh polish report](../fixtures/public-films/results/2026-10-21-polish.json) retains that rerun; see [verification](verification.md) for current checks and CI scope.
 
 These are actual local downloads and FFmpeg renders, not simulated model outputs. The [reproduction guide](public-film-demo.md), [source catalog](../fixtures/public-films/catalog.json), [exact shot recipes](../fixtures/public-films/selections.json), and [machine-readable results](../fixtures/public-films/results/2026-10-21.json) let others repeat the experiment without bundling films or generated videos in Git.
 

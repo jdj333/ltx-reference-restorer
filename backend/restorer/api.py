@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings, load_settings
-from .media import extract_frame, sha256
+from .media import extract_frame, probe, sha256
 from .schemas import ActorInput, GuideInput, JobInput, NoteInput, ProjectInput, ReferenceInput, ReferencePatch, ReviewInput, ShotInput, ShotPatch, SourceInput
 from .service import Service
 from .store import now
@@ -196,6 +196,61 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/jobs/{job_id}")
     def job(job_id: str):
         return service.public("job", service.store.get("job", job_id))
+
+    @app.get("/api/jobs/{job_id}/frame")
+    def job_frame(job_id: str, frame: int = 0, view: Literal["source", "output"] = "source"):
+        record = service.store.get("job", job_id)
+        if record["state"] != "succeeded":
+            raise HTTPException(422, "Only a completed output has comparison frames")
+        try:
+            provenance = record["provenance"]
+            shot = provenance["shot"]
+            if not 0 <= frame < shot["frame_count"]:
+                raise HTTPException(422, "Frame outside completed job")
+            if view == "source":
+                media_path = service.asset(provenance["source"]["asset_path"])
+                expected_hash = provenance["source"]["sha256"]
+                mapping = shot.get("frame_map")
+                index = mapping[frame]["source_frame"] if mapping else shot["frame_start"] + frame
+            else:
+                media_path = service.asset(record["output_path"])
+                expected_hash = provenance["output_sha256"]
+                index = frame
+            if type(index) is not int or index < 0:
+                raise ValueError("Invalid frozen frame mapping")
+            # Validate even when a PNG is already cached. A stale browser or
+            # preview cache must not hide changed source/output evidence.
+            if sha256(media_path) != expected_hash:
+                raise HTTPException(422, "Comparison media changed since this job completed; frame preview refused")
+            target = service.asset(f"previews/job-{record['id']}-{view}-{frame}.png")
+            metadata_path = service.asset(f"previews/job-{record['id']}-{view}-{frame}.json")
+            cached = False
+            try:
+                metadata = json.loads(metadata_path.read_text())
+                cached = (metadata.get("media_sha256") == expected_hash and metadata.get("decoded_frame") == index
+                          and metadata.get("png_sha256") == sha256(target))
+            except (OSError, ValueError, AttributeError):
+                pass
+            if not cached:
+                temporary = service.asset(f"previews/.job-{record['id']}-{uuid.uuid4().hex}.png")
+                temporary_metadata = temporary.with_suffix(".json")
+                try:
+                    # Inspect the hash-verified file itself, including sources
+                    # whose first stream is audio or an attached cover picture.
+                    stream = probe(media_path, settings, frames=False)["video_stream_index"]
+                    extract_frame(media_path, temporary, index, settings, stream)
+                    if sha256(media_path) != expected_hash:
+                        raise HTTPException(422, "Comparison media changed during frame extraction; frame preview refused")
+                    temporary_metadata.write_text(json.dumps({"media_sha256": expected_hash, "decoded_frame": index,
+                                                               "png_sha256": sha256(temporary)}))
+                    temporary.replace(target)
+                    temporary_metadata.replace(metadata_path)
+                finally:
+                    temporary.unlink(missing_ok=True)
+                    temporary_metadata.unlink(missing_ok=True)
+            return FileResponse(target, media_type="image/png", headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+        except (KeyError, IndexError, TypeError, ValueError, OSError, subprocess.SubprocessError, RuntimeError) as exc:
+            raise HTTPException(422, "Comparison frame could not be verified or decoded") from exc
 
     @app.post("/api/jobs/{job_id}/cancel")
     def cancel(job_id: str):

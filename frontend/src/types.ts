@@ -1,7 +1,7 @@
 export type Project = { id: string; name: string; created_at?: string; description?: string; demo_kind?: string };
 export type Source = {
   id: string; project_id: string; name: string; path: string; sha256: string; width: number; height: number;
-  display_width?: number; duration: number; fps: number; is_vfr: boolean; has_audio: boolean; frame_count?: number;
+  display_width?: number; sar?: number; duration: number; fps: number; is_vfr: boolean; has_audio: boolean; frame_count?: number;
   metadata?: Record<string, unknown>; media_url: string;
 };
 export type Placement = { frame: number; x: number; y: number; width: number; height: number };

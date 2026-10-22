@@ -5,6 +5,7 @@ import { Modal } from './Modal';
 import { LocalFilePicker } from './LocalFilePicker';
 import { CropEditor } from './CropEditor';
 import { SystemStatus } from './SystemStatus';
+import { useExactFrames } from './useExactFrames';
 import type { DemoResult } from './SystemStatus';
 import type { Actor, Backend, Guide, Job, Placement, Preset, Project, ProjectDetail, Reference, Setup, Shot, Source } from './types';
 
@@ -284,21 +285,41 @@ function Queue({ detail, selectedJob, setJobId, busy, act, openJob, backends }: 
 }
 
 const criteriaNames = ['identity', 'eyes', 'mouth', 'expression', 'gaze', 'motion', 'flicker', 'invented_detail'];
-function FaceCrop({ videoRef, source, region, time, label }: { videoRef: RefObject<HTMLVideoElement | null>; source?: Source; region?: Placement; time: number; label: string }) {
+function FaceCrop({ videoRef, exactImage, playing, source, region, time, label, pixelAspect = 1, failed = false }: { videoRef: RefObject<HTMLVideoElement | null>; exactImage?: HTMLImageElement; playing: boolean; source?: Source; region?: Placement; time: number; label: string; pixelAspect?: number; failed?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const video = videoRef.current; const target = canvas.current;
-    if (!video || !target || !region || !source) return;
-    const draw = () => { if (video.readyState < 2 || !video.videoWidth) return; const context = target.getContext('2d'); if (!context) return; const sx = video.videoWidth / source.width; const sy = video.videoHeight / source.height; target.width = Math.max(1, region.width * sx); target.height = Math.max(1, region.height * sy); context.drawImage(video, region.x * sx, region.y * sy, region.width * sx, region.height * sy, 0, 0, target.width, target.height); };
-    draw(); video.addEventListener('seeked', draw); video.addEventListener('loadeddata', draw); return () => { video.removeEventListener('seeked', draw); video.removeEventListener('loadeddata', draw); };
-  }, [videoRef, source, region, time]);
-  return <div className="face-crop"><span>{label}</span>{region ? <canvas ref={canvas} aria-label={`${label} enlarged face region`} /> : <p>Place a face region in Shot setup to inspect a crop.</p>}</div>;
+    if (!target || !region || !source) return;
+    const draw = () => {
+      const image = playing ? video : exactImage;
+      if (!image || (image instanceof HTMLVideoElement && (image.readyState < 2 || !image.videoWidth))) return;
+      const width = image instanceof HTMLVideoElement ? image.videoWidth : image.naturalWidth;
+      const height = image instanceof HTMLVideoElement ? image.videoHeight : image.naturalHeight;
+      if (!width || !height) return;
+      const context = target.getContext('2d'); if (!context) return;
+      const sx = width / source.width; const sy = height / source.height;
+      // Crop coordinates remain coded source pixels. Correct only the displayed
+      // crop's pixel aspect. Video natural dimensions already include SAR; raw
+      // PNG dimensions do not, so apply this correction only to paused stills.
+      target.width = Math.max(1, Math.round(region.width * sx * (playing ? 1 : pixelAspect)));
+      target.height = Math.max(1, Math.round(region.height * sy));
+      context.drawImage(image, region.x * sx, region.y * sy, region.width * sx, region.height * sy, 0, 0, target.width, target.height);
+    };
+    draw();
+    if (!playing || !video) return;
+    let active = true; let callback = 0;
+    const onFrame = () => { if (!active) return; draw(); callback = video.requestVideoFrameCallback(onFrame); };
+    if (typeof video.requestVideoFrameCallback === 'function') callback = video.requestVideoFrameCallback(onFrame);
+    video.addEventListener('timeupdate', draw); video.addEventListener('seeked', draw); video.addEventListener('loadeddata', draw);
+    return () => { active = false; if (callback && typeof video.cancelVideoFrameCallback === 'function') video.cancelVideoFrameCallback(callback); video.removeEventListener('timeupdate', draw); video.removeEventListener('seeked', draw); video.removeEventListener('loadeddata', draw); };
+  }, [videoRef, exactImage, playing, source, region, time, pixelAspect]);
+  return <div className="face-crop"><span>{label}</span>{!region ? <p>Place a face region in Shot setup to inspect a crop.</p> : playing || exactImage ? <canvas ref={canvas} aria-label={`${label} enlarged face region`} /> : <p>{failed ? 'Exact frame unavailable.' : 'Loading exact frame…'}</p>}</div>;
 }
 
 function Comparison({ detail, job, setJobId, busy, act }: { detail: ProjectDetail; job?: Job; setJobId: (id: string) => void; busy: boolean; act: Action }) {
   const completed = detail.jobs.filter(j => j.state === 'succeeded' && j.output_url);
   const selected = job?.state === 'succeeded' ? job : completed[completed.length - 1];
-  const snapshot = selected?.provenance as { shot?: Shot; source?: Source; references?: Reference[]; settings?: { use_references: boolean } } | undefined;
+  const snapshot = selected?.provenance as { shot?: Shot; source?: Source; references?: Reference[]; output_metadata?: { width: number; height: number; sar?: number }; settings?: { use_references: boolean } } | undefined;
   const shot = snapshot?.shot || detail.shots.find(s => s.id === selected?.shot_id);
   const liveSource = detail.sources.find(s => s.id === shot?.source_id);
   const source = snapshot?.source ? { ...liveSource, ...snapshot.source } as Source : liveSource;
@@ -309,13 +330,16 @@ function Comparison({ detail, job, setJobId, busy, act }: { detail: ProjectDetai
   const [opacity, setOpacity] = useState(0.5);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const playingRef = useRef(false);
+  const endedRef = useRef(false);
+  const timeRef = useRef(0);
   const [sourceDuration, setSourceDuration] = useState(0);
   const [outputDuration, setOutputDuration] = useState(0);
   const [notes, setNotes] = useState('');
   const [criteria, setCriteria] = useState<Record<string, string>>({});
   const [muted, setMuted] = useState(false);
   const [playheadDrift, setPlayheadDrift] = useState<number | null>(null);
-  useEffect(() => { const lastReview = selected?.reviews?.at(-1); setTime(0); setPlaying(false); setNotes(lastReview?.notes || ''); setCriteria(lastReview?.criteria || {}); setSourceDuration(0); setOutputDuration(0); setPlayheadDrift(null); }, [selected?.id]);
+  useEffect(() => { const lastReview = selected?.reviews?.at(-1); timeRef.current = 0; setTime(0); endedRef.current = false; playingRef.current = false; setPlaying(false); setNotes(lastReview?.notes || ''); setCriteria(lastReview?.criteria || {}); setSourceDuration(0); setOutputDuration(0); setPlayheadDrift(null); }, [selected?.id]);
   const sourceOffset = selected?.source_preview_url ? 0 : shot?.start_time || 0;
   const duration = outputDuration || shot?.duration || 0;
   const syncThreshold = Math.min(0.02, 0.5 / (source?.fps || 25));
@@ -325,15 +349,16 @@ function Comparison({ detail, job, setJobId, busy, act }: { detail: ProjectDetai
     let active = true;
     let callback = 0;
     const measure = () => {
-      if (a.readyState >= 2 && b.readyState >= 2) setPlayheadDrift(a.currentTime - sourceOffset - b.currentTime);
+      if (playingRef.current && !b.paused && a.readyState >= 2 && b.readyState >= 2) setPlayheadDrift(a.currentTime - sourceOffset - b.currentTime);
     };
     const onFrame = (_now: number, metadata: VideoFrameCallbackMetadata) => {
       if (!active) return;
       // Output is the master clock. Seek the source only after its prior seek has
       // finished, so slower decoding cannot create an unbounded seek queue.
-      if (!b.paused && !a.seeking && Math.abs(a.currentTime - sourceOffset - b.currentTime) > syncThreshold) a.currentTime = sourceOffset + b.currentTime;
-      setTime(metadata.mediaTime);
-      measure();
+      if (playingRef.current && !b.paused) {
+        if (!a.seeking && Math.abs(a.currentTime - sourceOffset - b.currentTime) > syncThreshold) a.currentTime = sourceOffset + b.currentTime;
+        timeRef.current = metadata.mediaTime; setTime(metadata.mediaTime); measure();
+      }
       callback = b.requestVideoFrameCallback(onFrame);
     };
     if (typeof b.requestVideoFrameCallback === 'function') callback = b.requestVideoFrameCallback(onFrame);
@@ -345,29 +370,56 @@ function Comparison({ detail, job, setJobId, busy, act }: { detail: ProjectDetai
       a.pause(); b.pause();
     };
   }, [selected?.id, sourceOffset, syncThreshold]);
-  const localFrame = shot?.frame_map ? [...shot.frame_map].reverse().find(f => f.output_timestamp <= time)?.frame || 0 : Math.round(time * (source?.fps || 1));
+  const localFrame = shot?.frame_map ? [...shot.frame_map].reverse().find(f => f.output_timestamp <= time + 0.000001)?.frame || 0 : Math.max(0, Math.min((shot?.frame_end || 1) - (shot?.frame_start || 0) - 1, Math.floor(time * (source?.fps || 1) + 0.000001)));
+  const exact = useExactFrames(selected?.id, localFrame, !playing);
+  const sourcePixelAspect = source?.sar || (source?.display_width ? source.display_width / source.width : 1);
+  const outputPixelAspect = snapshot?.output_metadata?.sar || 1;
+  const sourceDisplayAspect = source ? source.width * sourcePixelAspect / source.height : 1;
+  const outputDisplayAspect = snapshot?.output_metadata ? snapshot.output_metadata.width * outputPixelAspect / snapshot.output_metadata.height : sourceDisplayAspect;
   const region = shot && source ? placementAt(shot.setup?.keyframes || [], localFrame, shot.setup?.interpolation || 'linear') : undefined;
-  function sync(next: number) { setTime(next); if (original.current) original.current.currentTime = next + sourceOffset; if (output.current) output.current.currentTime = next; }
-  function pauseTogether() {
-    const a = original.current; const b = output.current;
-    a?.pause(); b?.pause(); setPlaying(false);
-    if (b) sync(b.currentTime);
-  }
-  async function togglePlay() { const a = original.current; const b = output.current; if (!a || !b) return; if (playing) pauseTogether(); else { if (time >= duration - 0.02) sync(0); a.currentTime = sourceOffset + b.currentTime; try { await Promise.all([a.play(), b.play()]); setPlaying(true); } catch { pauseTogether(); } } }
-  function stepFrame(direction: -1 | 1) {
-    pauseTogether();
+  function canonicalTime(next: number) {
     const mapping = shot?.frame_map;
-    const current = output.current?.currentTime || time;
+    if (mapping?.length) return [...mapping].reverse().find(entry => entry.output_timestamp <= next + 0.000001)?.output_timestamp || 0;
+    const fps = source?.fps || 25;
+    const last = Math.max(0, (shot?.frame_end || 1) - (shot?.frame_start || 0) - 1);
+    return Math.max(0, Math.min(last, Math.floor(next * fps + 0.000001))) / fps;
+  }
+  function sync(next: number) {
+    endedRef.current = false;
+    const target = playingRef.current ? next : canonicalTime(next);
+    timeRef.current = target; setTime(target);
+    if (original.current) original.current.currentTime = target + sourceOffset;
+    if (output.current) output.current.currentTime = target;
+  }
+  function pauseTogether() {
+    if (!playingRef.current) return; // A paused browser seek is not a new playhead.
+    const current = output.current?.currentTime ?? timeRef.current;
+    const ended = !!output.current?.ended || (!!output.current?.duration && current >= output.current.duration - 0.000001);
+    playingRef.current = false; setPlaying(false);
+    original.current?.pause(); output.current?.pause(); sync(current); endedRef.current = ended;
+  }
+  function finishPlayback() { pauseTogether(); endedRef.current = true; }
+  async function togglePlay() {
+    const a = original.current; const b = output.current; if (!a || !b) return;
+    if (playingRef.current) { pauseTogether(); return; }
+    const next = endedRef.current || timeRef.current >= duration - 0.02 ? 0 : timeRef.current;
+    exact.clear(); sync(next); playingRef.current = true; setPlaying(true);
+    try { await Promise.all([a.play(), b.play()]); } catch { pauseTogether(); }
+  }
+  function stepFrame(direction: -1 | 1) {
+    const current = playingRef.current ? output.current?.currentTime ?? timeRef.current : timeRef.current;
+    playingRef.current = false; setPlaying(false); original.current?.pause(); output.current?.pause();
+    const mapping = shot?.frame_map;
     if (mapping?.length) {
       let index = 0;
-      mapping.forEach((entry, i) => { if (entry.output_timestamp <= current + 0.00001) index = i; });
+      mapping.forEach((entry, i) => { if (entry.output_timestamp <= current + 0.000001) index = i; });
       sync(mapping[Math.max(0, Math.min(mapping.length - 1, index + direction))].output_timestamp);
-    } else sync(Math.max(0, Math.min(duration, current + direction / (source?.fps || 25))));
+    } else sync(canonicalTime(current) + direction / (source?.fps || 25));
   }
   function updateTime() {
     const a = original.current; const b = output.current;
-    if (!a || !b || typeof b.requestVideoFrameCallback === 'function') return;
-    setTime(b.currentTime);
+    if (!a || !b || !playingRef.current || b.paused || typeof b.requestVideoFrameCallback === 'function') return;
+    timeRef.current = b.currentTime; setTime(b.currentTime);
     if (!a.seeking && Math.abs(a.currentTime - sourceOffset - b.currentTime) > syncThreshold) a.currentTime = sourceOffset + b.currentTime;
     setPlayheadDrift(a.currentTime - sourceOffset - b.currentTime);
   }
@@ -378,10 +430,14 @@ function Comparison({ detail, job, setJobId, busy, act }: { detail: ProjectDetai
   const baseline = selected.backend === 'baseline';
   const conditioningLabel = snapshot?.settings?.use_references ? 'actor reference conditioned' : 'no actor reference conditioning';
   return <div className="comparison-layout"><Panel className="span-full" title={shot.name} subtitle={`${baseline ? 'Baseline upscale' : human(selected.backend)} · ${conditioningLabel} · version ${selected.version || '—'} · review ${human(selected.review_state || 'unreviewed')}`} action={<div className="comparison-actions"><select aria-label="Render version to compare" value={selected.id} onChange={e => setJobId(e.target.value)}>{completed.map(j => <option key={j.id} value={j.id}>{detail.shots.find(s => s.id === j.shot_id)?.name} · {human(j.backend)} · v{j.version || j.id.slice(0, 5)}</option>)}</select><div className="segmented"><button className={mode === 'side' ? 'active' : ''} aria-pressed={mode === 'side'} onClick={() => setMode('side')}>Side by side</button><button className={mode === 'overlay' ? 'active' : ''} aria-pressed={mode === 'overlay'} onClick={() => setMode('overlay')}>Overlay</button></div></div>}>
-    <div className={`comparison-stage ${mode}`} tabIndex={0} role="group" aria-label="Synchronized comparison. Left and right arrows step frames; Space plays or pauses." onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); stepFrame(event.key === 'ArrowLeft' ? -1 : 1); } else if (event.key === ' ' && !event.repeat) { event.preventDefault(); void togglePlay(); } }} style={{ '--overlay-opacity': opacity } as CSSProperties}><div className="compare-video original"><span className="preview-chip">ORIGINAL SOURCE</span><video key={`source-${selected.id}`} ref={original} src={selected.source_preview_url || source.media_url} muted playsInline preload="auto" onLoadedMetadata={() => { setSourceDuration(original.current?.duration || 0); if (original.current) original.current.currentTime = sourceOffset; }} /></div><div className="compare-video output"><span className="preview-chip">{baseline ? 'BASELINE UPSCALE' : 'LTX CANDIDATE'} · V{selected.version || '—'}</span><video key={selected.id} ref={output} src={selected.output_url} muted={muted} playsInline preload="auto" onLoadedMetadata={() => setOutputDuration(output.current?.duration || 0)} onTimeUpdate={updateTime} onEnded={pauseTogether} onPause={pauseTogether} /></div></div>
+    <div className={`comparison-stage ${mode} ${playing ? 'playing' : 'paused'}`} data-frame={localFrame} data-frame-ready={!playing && !!exact.pair ? 'true' : 'false'} tabIndex={0} role="group" aria-label="Synchronized comparison. Left and right arrows step frames; Space plays or pauses." onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); stepFrame(event.key === 'ArrowLeft' ? -1 : 1); } else if (event.key === ' ' && !event.repeat) { event.preventDefault(); void togglePlay(); } }} style={{ '--overlay-opacity': opacity } as CSSProperties}>
+      <div className="compare-video original" style={{ '--frame-aspect': sourceDisplayAspect } as CSSProperties}><span className="preview-chip">ORIGINAL SOURCE{!playing && exact.pair ? ` · FRAME ${localFrame}` : ''}</span><video className={playing ? '' : 'hidden-for-still'} key={`source-${selected.id}`} ref={original} src={selected.source_preview_url || source.media_url} muted playsInline preload="auto" onLoadedMetadata={() => { setSourceDuration(original.current?.duration || 0); if (original.current) original.current.currentTime = sourceOffset + timeRef.current; }} />{!playing && (exact.pair ? <img className="exact-frame" src={exact.pair.source.url} alt="Original source paused frame" data-frame={localFrame} /> : <div className="still-placeholder">{exact.failed ? 'Original frame unavailable' : `Loading original frame ${localFrame}…`}</div>)}</div>
+      <div className="compare-video output" style={{ '--frame-aspect': outputDisplayAspect } as CSSProperties}><span className="preview-chip">{baseline ? 'BASELINE UPSCALE' : 'LTX CANDIDATE'} · V{selected.version || '—'}{!playing && exact.pair ? ` · FRAME ${localFrame}` : ''}</span><video className={playing ? '' : 'hidden-for-still'} key={selected.id} ref={output} src={selected.output_url} muted={muted} playsInline preload="auto" onLoadedMetadata={() => setOutputDuration(output.current?.duration || 0)} onTimeUpdate={updateTime} onEnded={finishPlayback} onPause={pauseTogether} />{!playing && (exact.pair ? <img className="exact-frame" src={exact.pair.output.url} alt="Rendered output paused frame" data-frame={localFrame} /> : <div className="still-placeholder">{exact.failed ? 'Output frame unavailable' : `Loading output frame ${localFrame}…`}</div>)}</div>
+    </div>{!playing && !exact.pair && <div className={`exact-frame-status ${exact.failed ? 'failed' : ''}`} role={exact.failed ? 'alert' : 'status'}>{exact.failed ? <><span>Exact paused frames could not be loaded. Check that the version’s source and output files are unchanged and available.</span><button className="secondary" onClick={exact.retry}>Retry exact frames</button></> : `Loading exact comparison frame ${localFrame}…`}</div>}
+
     <div className="playback"><button className="play-button" aria-label={playing ? 'Pause synchronized playback' : 'Play synchronized comparison'} onClick={togglePlay}><Icon name={playing ? 'pause' : 'play'} size={17} /></button><button className="frame-step" aria-label="Previous comparison frame" title="Previous frame" onClick={() => stepFrame(-1)}>‹</button><button className="frame-step" aria-label="Next comparison frame" title="Next frame" onClick={() => stepFrame(1)}>›</button><span className="mono">{fmt(time)}</span><input aria-label="Synchronized comparison playhead" type="range" min="0" max={duration || 1} step="0.001" value={Math.min(time, duration)} onChange={e => sync(Number(e.target.value))} /><span className="mono">{fmt(duration)}</span><button className="audio-toggle" onClick={() => setMuted(!muted)}>{muted ? 'Audio off' : 'Original audio'}</button></div>{mode === 'overlay' && <div className="overlay-control"><span>Source</span><input aria-label="Output overlay opacity" type="range" min="0" max="1" step="0.01" value={opacity} onChange={e => setOpacity(Number(e.target.value))} /><span>Output · {Math.round(opacity * 100)}%</span></div>}
-    <p className="comparison-keyboard-hint">Focus the video area: ← / → step one frame · Space plays or pauses.</p><div className="alignment-bar"><span className={playheadDrift !== null && Math.abs(playheadDrift) > syncThreshold ? 'alignment-warning' : ''}><span className="dot" />Live playhead drift <strong>{playheadDrift === null ? 'loading…' : `${playheadDrift >= 0 ? '+' : ''}${(playheadDrift * 1000).toFixed(1)} ms`}</strong></span><span>Duration difference <strong>{alignmentDifference === undefined ? 'loading…' : `${alignmentDifference >= 0 ? '+' : ''}${(alignmentDifference * 1000).toFixed(1)} ms`}</strong></span><span>Source timestamp <strong className="mono">{fmt(shot.start_time + time)}</strong></span></div>
-  </Panel><div className="stack"><Panel title="Look closer" subtitle="Enlarged regions follow the manually placed face keyframes."><div className="face-grid"><FaceCrop videoRef={original} source={source} region={region} time={time} label="Original face" /><FaceCrop videoRef={output} source={source} region={region} time={time} label="Rendered face" /></div><div className="selected-references"><span className="eyebrow">SELECTED ACTOR REFERENCES</span><div>{(shot.setup?.reference_ids || []).map(id => savedReferences.find(r => r.id === id)).filter((r): r is Reference => !!r).map(r => <figure key={r.id}><img src={r.media_url || (r.asset_path ? `/api/assets/${encodeURI(r.asset_path)}` : detail.references.find(current => current.id === r.id)?.media_url)} alt={`${human(r.view)} reference`} /><figcaption>{human(r.view)}{r.provenance === 'generated_reconstruction' && <b>Generated</b>}</figcaption></figure>)}{!shot.setup?.reference_ids?.length && <p className="muted">This shot has no selected actor references.</p>}</div></div></Panel><Panel title="Technical integrity" subtitle="Processing checks do not establish identity or performance fidelity."><div className="panel-body"><dl className="details-grid"><dt>Source timing</dt><dd>{fmt(shot.start_time)} → {fmt(shot.end_time)}</dd><dt>Source frames</dt><dd>{shot.frame_start} → {shot.frame_end} (exclusive)</dd><dt>Source aspect ratio</dt><dd>{source.display_width || source.width} : {source.height}</dd><dt>Audio policy</dt><dd>Original source audio by default</dd><dt>Review status</dt><dd><Status state={selected.review_state || 'unreviewed'} /></dd></dl></div><details className="technical-details"><summary>Recorded render manifest & checks</summary><pre>{JSON.stringify(selected.provenance || {}, null, 2)}</pre></details></Panel>
+    <p className="comparison-keyboard-hint">Focus the video area: ← / → step one frame · Space plays or pauses. Paused views decode the exact stored frame from each file.</p><div className="alignment-bar"><span className={playing && playheadDrift !== null && Math.abs(playheadDrift) > syncThreshold ? 'alignment-warning' : ''}><span className="dot" />{playing ? 'Live playhead drift' : 'Paused comparison'} <strong>{!playing ? exact.pair ? `exact frame ${localFrame}` : exact.failed ? 'unavailable' : 'loading…' : playheadDrift === null ? 'loading…' : `${playheadDrift >= 0 ? '+' : ''}${(playheadDrift * 1000).toFixed(1)} ms`}</strong></span><span>Duration difference <strong>{alignmentDifference === undefined ? 'loading…' : `${alignmentDifference >= 0 ? '+' : ''}${(alignmentDifference * 1000).toFixed(1)} ms`}</strong></span><span>Source timestamp <strong className="mono">{fmt(shot.start_time + time)}</strong></span></div>
+  </Panel><div className="stack"><Panel title="Look closer" subtitle="Enlarged regions follow the manually placed face keyframes."><div className="face-grid"><FaceCrop videoRef={original} exactImage={exact.pair?.source.image} playing={playing} pixelAspect={sourcePixelAspect} failed={exact.failed} source={source} region={region} time={time} label="Original face" /><FaceCrop videoRef={output} exactImage={exact.pair?.output.image} playing={playing} pixelAspect={outputPixelAspect} failed={exact.failed} source={source} region={region} time={time} label="Rendered face" /></div><div className="selected-references"><span className="eyebrow">SELECTED ACTOR REFERENCES</span><div>{(shot.setup?.reference_ids || []).map(id => savedReferences.find(r => r.id === id)).filter((r): r is Reference => !!r).map(r => <figure key={r.id}><img src={r.media_url || (r.asset_path ? `/api/assets/${encodeURI(r.asset_path)}` : detail.references.find(current => current.id === r.id)?.media_url)} alt={`${human(r.view)} reference`} /><figcaption>{human(r.view)}{r.provenance === 'generated_reconstruction' && <b>Generated</b>}</figcaption></figure>)}{!shot.setup?.reference_ids?.length && <p className="muted">This shot has no selected actor references.</p>}</div></div></Panel><Panel title="Technical integrity" subtitle="Processing checks do not establish identity or performance fidelity."><div className="panel-body"><dl className="details-grid"><dt>Source timing</dt><dd>{fmt(shot.start_time)} → {fmt(shot.end_time)}</dd><dt>Source frames</dt><dd>{shot.frame_start} → {shot.frame_end} (exclusive)</dd><dt>Source aspect ratio</dt><dd>{source.display_width || source.width} : {source.height}</dd><dt>Audio policy</dt><dd>Original source audio by default</dd><dt>Review status</dt><dd><Status state={selected.review_state || 'unreviewed'} /></dd></dl></div><details className="technical-details"><summary>Recorded render manifest & checks</summary><pre>{JSON.stringify(selected.provenance || {}, null, 2)}</pre></details></Panel>
       {!!detail.notes.filter(n => n.shot_id === shot.id).length && <Panel title="Shot notes"><div className="saved-notes">{detail.notes.filter(n => n.shot_id === shot.id).map(n => <article key={n.id}><span className="mono">{n.timestamp === undefined ? 'Shot note' : fmt(n.timestamp)}</span><p>{n.text}</p></article>)}</div></Panel>}
     </div><Panel title="Performance review" subtitle="Judge the candidate against the original performance. No accuracy score is inferred."><div className="panel-body"><div className="review-criteria">{criteriaNames.map(name => <label key={name}><span>{human(name)}</span><select aria-label={`${human(name)} review criterion`} value={criteria[name] || 'unreviewed'} onChange={e => setCriteria({ ...criteria, [name]: e.target.value })}><option value="unreviewed">Not reviewed</option><option value="preserved">Looks preserved</option><option value="concern">Concern / revise</option></select></label>)}</div><Field label={`Review notes · source ${fmt(shot.start_time + time)}`}><textarea rows={5} placeholder="Check eye and mouth shape, expression, gaze, blinking, motion, consistency, and invented detail…" value={notes} onChange={e => setNotes(e.target.value)} /></Field><button className="text-button note-button" disabled={busy || !notes.trim()} onClick={addNote}><Icon name="plus" size={15} />Save a timestamped note</button><div className="review-actions"><button className="primary" disabled={busy} onClick={() => review('accepted')}><Icon name="check" />Accept version</button><button className="secondary" disabled={busy} onClick={() => review('needs_revision')}>Needs revision</button><button className="danger" disabled={busy} onClick={() => review('rejected')}><Icon name="close" />Reject</button></div><p className="field-hint">Acceptance records your judgment. This version’s file stays unchanged; settings changes require a new render.</p></div></Panel></div>;
 }

@@ -4,7 +4,7 @@ The application runs locally from a source checkout. The conventional FFmpeg bas
 
 ## Supported and exercised platforms
 
-The recorded end-user workflow was tested on **macOS arm64 (Apple M1 Max, 32 GB)**. The local polish run also passed six real browser cases across Playwright Chromium and WebKit. Historical Ubuntu GitHub Actions runs passed the Python/FFmpeg suite and frontend build; that is narrower than a tested interactive desktop installation. The expanded CI matrix (Python 3.11/3.14 and a separate Chromium/WebKit job on Python 3.12/Node 22) is configured; check [Actions](https://github.com/jdj333/ltx-reference-restorer/actions) for each exact commit's result. Other Linux/macOS configurations need local verification. **Native Windows is unsupported** because the worker currently uses POSIX process/locking facilities. WSL has not been validated as a desktop installation. See the [verification matrix](verification.md#tested-platforms).
+The recorded end-user workflow was tested on **macOS arm64 (Apple M1 Max, 32 GB)**. The [verification matrix](verification.md) records exact Python/browser results and their revision scope, including the decoded-still paused-comparison path described below. Historical Ubuntu GitHub Actions runs passed the Python/FFmpeg suite and frontend build; that is narrower than a tested interactive desktop installation. The expanded CI matrix (Python 3.11/3.14 and a separate Chromium/WebKit job on Python 3.12/Node 22) is configured; check [Actions](https://github.com/jdj333/ltx-reference-restorer/actions) for each exact commit's result. Other Linux/macOS configurations need local verification. **Native Windows is unsupported** because the worker currently uses POSIX process/locking facilities. WSL has not been validated as a desktop installation. See the [verification matrix](verification.md#tested-platforms).
 
 Install these prerequisites yourself:
 
@@ -64,7 +64,9 @@ RESTORER_DATA_DIR="$PWD/.data/first-demo" uv run --locked restorer start
 
 Alternatively, with `restorer start` already running, choose **Try synthetic demo** from the welcome page or Setup & status. The in-app action queues the real baseline for the existing worker and reuses its labeled demo project on subsequent opens.
 
-The synthetic demo creates procedural source media, a labeled generated reference, a shot, a guide and a real baseline output. It leaves the result unreviewed. Reopen the demo project in the browser and compare source/output, step frames, inspect the guide and save your review. Restart with the same data directory to reopen it. A baseline does not consume actor conditioning and does not establish restoration fidelity.
+The synthetic demo creates procedural source media, a labeled generated reference, a shot, a guide and a real baseline output. It leaves the result unreviewed. Reopen the demo project in the browser and compare source/output, step frames, inspect the guide and save your review.
+
+Paused comparison displays server-decoded PNG stills for the selected frame, using the completed job's frozen source/output mapping rather than the browser video element's most recently painted frame. Step controls and keyboard arrows change the still pair; side-by-side and overlay use those same decoded images. The app shows loading while the requested pair is being obtained and an explicit error if it cannot be verified/decoded. It hides the old pair and face crops while loading or failed, and offers **Retry exact frames** after a failure. Play switches to synchronized browser video playback; pausing returns to the selected decoded stills. Browser playback is useful for judging motion, while paused stills provide the exact frame comparison. Restart with the same data directory to reopen it. A baseline does not consume actor conditioning and does not establish restoration fidelity.
 
 For real historical examples, follow the [public-film reproduction guide](public-film-demo.md). Its downloads are opt-in, attributed and kept outside Git; run its commands against fresh dedicated directories. Neither example workflow overwrites ordinary projects.
 
@@ -97,8 +99,13 @@ RESTORER_CONFIG=/absolute/path/to/config.local.toml ./scripts/launch.sh
 | Imports denied | Add the resolved media directory to `import_roots` in your local config. The app intentionally refuses paths outside that scope. |
 | Jobs stay queued | Use `restorer start` so both API and worker run, or start the dedicated worker with the same configuration/data directory. |
 | Another worker owns this directory | Locate the existing application using that workspace. Do not remove its lock or start duplicate workers. |
+| Paused comparison loading or failing | Wait for both requested stills. If an error appears, check that the completed job's source/output files are intact; a changed file or decode failure is refused. Keep the error visible rather than judging an earlier frame as the current one. |
 | Interrupted render | Use retry for a new immutable version after the worker has recorded interruption. Partial denoising is not resumed. |
 | ComfyUI unavailable or missing nodes/models | Read the [backend preflight](public-demo-backend-status.md) and [integration notes](integration-notes.md); install/configure the intended backend separately. A baseline does not substitute for a failed LTX job. |
 | Rotation, VFR, interlace or reference constraints | Read the exact rejection, retain the original and prepare an explicit documented derivative only when needed. The app does not silently change performance timing. |
 
 Keep the server bound to localhost. This is a trusted-user application without authentication for use as a public network service. Doctor, local paths, raw logs and full provenance may contain personal information; keep them local. Use a synthetic/public fixture and a sanitized error summary when [reporting a bug](../CONTRIBUTING.md#report-a-bug-safely).
+
+## Code, film and model terms
+
+The application code and original documentation use the [MIT License](../LICENSE). Third-party film editions and model files retain their own terms. Review the linked media provenance and official model access/license conditions separately; installing or running MIT-licensed wrapper code does not accept those conditions or grant access to gated weights.

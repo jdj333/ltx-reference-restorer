@@ -33,7 +33,7 @@ def main():
         image.save(media / "synthetic-reference.png")
         run(["ffmpeg", "-nostdin", "-v", "error", "-loop", "1", "-i", str(media / "synthetic-reference.png"),
              "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=3", "-r", "12",
-             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-t", "3",
+             "-vf", "setsar=4/3", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-t", "3",
              "-movflags", "+faststart", str(media / "synthetic-source.mp4")])
         settings = Settings(data_dir=folder / "app", port=port, import_roots=(media,), comfy_url="http://127.0.0.1:1")
         config = folder / "config.toml"
