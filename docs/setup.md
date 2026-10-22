@@ -35,6 +35,8 @@ cd ltx-reference-restorer
 
 On macOS, you can also double-click **Launch Restorer.command** inside the checkout. The launcher checks uv, Node.js 22+, npm, FFmpeg and ffprobe; syncs the committed Python lock; installs the frontend npm lock; builds the UI; and starts the API and worker. Dependency installation may access the network. It does not install system tools, download models or start ComfyUI. A missing prerequisite stops with an explanation.
 
+The launcher was exercised from a fresh checkout with spaces in its path, including a newly created Python 3.14.6 environment, frontend install/build, live API/worker and a successful unreviewed synthetic baseline. See the [recorded verification](verification.md#recorded-evidence).
+
 Open **http://127.0.0.1:8787**. Select **Setup & status** to check tools, worker state, storage and exact ComfyUI blockers. The view distinguishes advertised model filenames from proven inference and offers **Download safe diagnostics** without paths/project contents/raw logs. The local storage path is displayed for your own use; omit it from public screenshots. Leave the launcher terminal open. **Ctrl-C stops this application's API and worker.** The launch command works when the checkout path contains spaces. Use a terminal for custom environment/configuration settings. If executable permissions were lost while extracting an archive, run `bash scripts/launch.sh` from its repository root.
 
 The equivalent manual setup is:
